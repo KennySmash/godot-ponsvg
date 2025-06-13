@@ -88,6 +88,9 @@ def build_godot(settings):
     if settings["development"]["clean_build"]:
         scons_cmd.append("--clean")
     
+    # Add parallel build
+    scons_cmd.extend(["-j", "4"])
+    
     print(f"Building Godot with command: {' '.join(scons_cmd)}")
     print(f"Working directory: {godot_path}")
     
@@ -95,7 +98,6 @@ def build_godot(settings):
     result = subprocess.run(
         scons_cmd,
         cwd=godot_path,
-        capture_output=True,
         text=True
     )
     

@@ -11,6 +11,9 @@ bin/
 .godot/
 *.tmp
 
+# Build directory
+build/
+
 # Test outputs
 tests/output/
 *.backup/

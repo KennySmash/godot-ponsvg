@@ -11,6 +11,13 @@
     "warnings": "extra",
     "werror": "no"
   },
+  "build_output": {
+    "create_timestamped_builds": true,
+    "keep_build_history": true,
+    "max_old_builds": 5,
+    "include_debug_symbols": false,
+    "package_with_templates": false
+  },
   "test_settings": {
     "enable_performance_tests": true,
     "enable_visual_tests": true,
