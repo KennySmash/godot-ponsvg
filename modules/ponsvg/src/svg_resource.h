@@ -1,5 +1,5 @@
-#ifndef SVG_RESOURCE_H
-#define SVG_RESOURCE_H
+#ifndef PONPONSVG_RESOURCE_H
+#define PONPONSVG_RESOURCE_H
 
 #include "core/io/resource.h"
 #include "core/variant/dictionary.h"
@@ -13,18 +13,18 @@ namespace lunasvg {
 }
 
 // Cache entry for rendered SVG content
-struct SVGCacheEntry {
+struct PonPonSVGCacheEntry {
     Ref<Image> image;
     Vector2i size;
     String cache_key;
     uint64_t timestamp;
     bool is_dirty;
     
-    SVGCacheEntry() : timestamp(0), is_dirty(true) {}
+    PonPonSVGCacheEntry() : timestamp(0), is_dirty(true) {}
 };
 
-class SVGResource : public Resource {
-    GDCLASS(SVGResource, Resource);
+class PonPonSVGResource : public Resource {
+    GDCLASS(PonPonSVGResource, Resource);
 
 private:
     String svg_data;
@@ -32,9 +32,8 @@ private:
     Dictionary symbols;
     Dictionary fill_overrides;
     Dictionary stroke_overrides;
-    Dictionary shader_overrides;
-      // Performance optimization - caching system
-    mutable Dictionary cache_entries; // String -> SVGCacheEntry
+    Dictionary shader_overrides;      // Performance optimization - caching system
+    mutable Dictionary cache_entries; // String -> PonPonSVGCacheEntry
     mutable uint64_t last_modification_time;
     mutable bool needs_cache_clear;
     mutable bool cache_enabled;
@@ -55,8 +54,8 @@ protected:
     static void _bind_methods();
 
 public:
-    SVGResource();
-    ~SVGResource();
+    PonPonSVGResource();
+    ~PonPonSVGResource();
 
     // Core loading functionality
     Error load_from_file(const String &p_path);
@@ -104,4 +103,4 @@ public:
     Vector2i calculate_lod_size(const Vector2i &p_requested_size) const;
 };
 
-#endif // SVG_RESOURCE_H
+#endif // PONPONSVG_RESOURCE_H

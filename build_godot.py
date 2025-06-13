@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Quick build script for Godot with SVG module"""
+"""Quick build script for Godot with PonSVG module"""
 
 import os
 import sys
@@ -14,17 +14,15 @@ def main():
     
     # Change to Godot directory
     os.chdir(godot_path)
-    
-    # Build command
+      # Build command
     cmd = [
         sys.executable, "-c", "import SCons.Script; SCons.Script.main()",
         "target=editor",
         "platform=windows",
-        "module_svg_enabled=yes",
+        "module_ponsvg_enabled=yes",
         "-j4"  # Use 4 cores
     ]
-    
-    print("Building Godot with SVG module...")
+      print("Building Godot with PonSVG module...")
     print(f"Command: {' '.join(cmd)}")
     print(f"Working directory: {godot_path}")
     print()

@@ -1,12 +1,12 @@
 {
   "godot_dev_path": "E:\\Dev\\godot-dev",
-  "module_name": "svg_module",
+  "module_name": "ponsvg",
   "build_target": "editor",
   "platform": "windows",
   "scons_options": {
     "target": "editor",
     "platform": "windows", 
-    "module_svg_enabled": "yes",
+    "module_ponsvg_enabled": "yes",
     "optimize": "speed",
     "warnings": "extra",
     "werror": "no"

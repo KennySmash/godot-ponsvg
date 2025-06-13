@@ -1,15 +1,15 @@
-#ifndef SVG_SPRITE_H
-#define SVG_SPRITE_H
+#ifndef PONSVG_SPRITE_H
+#define PONSVG_SPRITE_H
 
 #include "scene/2d/node_2d.h"
 #include "scene/resources/shader_material.h"
 #include "svg_resource.h"
 
-class SVGSprite2D : public Node2D {
-    GDCLASS(SVGSprite2D, Node2D);
+class PonSVGSprite2D : public Node2D {
+    GDCLASS(PonSVGSprite2D, Node2D);
 
 private:
-    Ref<SVGResource> svg_resource;
+    Ref<PonSVGResource> svg_resource;
     String symbol_id;
     Vector2 draw_size;
     bool centered;
@@ -28,12 +28,10 @@ protected:
     virtual void _notification(int p_what);
 
 public:
-    SVGSprite2D();
-    ~SVGSprite2D();
-
-    // SVG-specific properties
-    void set_svg_resource(const Ref<SVGResource> &p_resource);
-    Ref<SVGResource> get_svg_resource() const;
+    PonSVGSprite2D();
+    ~PonSVGSprite2D();    // PonSVG-specific properties
+    void set_ponsvg_resource(const Ref<PonSVGResource> &p_resource);
+    Ref<PonSVGResource> get_ponsvg_resource() const;
     
     void set_symbol_id(const String &p_id);
     String get_symbol_id() const;
@@ -55,4 +53,4 @@ public:
     Rect2 get_rect() const;
 };
 
-#endif // SVG_SPRITE_H
+#endif // PONSVG_SPRITE_H

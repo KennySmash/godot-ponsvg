@@ -1,7 +1,7 @@
 #include "svg_sprite.h"
 #include "servers/rendering_server.h"
 
-SVGSprite2D::SVGSprite2D() {
+PonSVGSprite2D::PonSVGSprite2D() {
     draw_size = Vector2(64, 64);
     centered = true;
     modulate_color = Color(1, 1, 1, 1);
@@ -9,35 +9,34 @@ SVGSprite2D::SVGSprite2D() {
     texture_rid = RenderingServer::get_singleton()->texture_2d_create(Ref<Image>());
 }
 
-SVGSprite2D::~SVGSprite2D() {
+PonSVGSprite2D::~PonSVGSprite2D() {
     if (texture_rid.is_valid()) {
         RenderingServer::get_singleton()->free_rid(texture_rid);
     }
 }
 
-void SVGSprite2D::_bind_methods() {
-    ClassDB::bind_method(D_METHOD("set_svg_resource", "resource"), &SVGSprite2D::set_svg_resource);
-    ClassDB::bind_method(D_METHOD("get_svg_resource"), &SVGSprite2D::get_svg_resource);
+void PonSVGSprite2D::_bind_methods() {    ClassDB::bind_method(D_METHOD("set_ponsvg_resource", "resource"), &PonSVGSprite2D::set_ponsvg_resource);
+    ClassDB::bind_method(D_METHOD("get_ponsvg_resource"), &PonSVGSprite2D::get_ponsvg_resource);
     
-    ClassDB::bind_method(D_METHOD("set_symbol_id", "id"), &SVGSprite2D::set_symbol_id);
-    ClassDB::bind_method(D_METHOD("get_symbol_id"), &SVGSprite2D::get_symbol_id);
+    ClassDB::bind_method(D_METHOD("set_symbol_id", "id"), &PonSVGSprite2D::set_symbol_id);
+    ClassDB::bind_method(D_METHOD("get_symbol_id"), &PonSVGSprite2D::get_symbol_id);
     
-    ClassDB::bind_method(D_METHOD("set_draw_size", "size"), &SVGSprite2D::set_draw_size);
-    ClassDB::bind_method(D_METHOD("get_draw_size"), &SVGSprite2D::get_draw_size);
+    ClassDB::bind_method(D_METHOD("set_draw_size", "size"), &PonSVGSprite2D::set_draw_size);
+    ClassDB::bind_method(D_METHOD("get_draw_size"), &PonSVGSprite2D::get_draw_size);
     
-    ClassDB::bind_method(D_METHOD("set_centered", "centered"), &SVGSprite2D::set_centered);
-    ClassDB::bind_method(D_METHOD("is_centered"), &SVGSprite2D::is_centered);
+    ClassDB::bind_method(D_METHOD("set_centered", "centered"), &PonSVGSprite2D::set_centered);
+    ClassDB::bind_method(D_METHOD("is_centered"), &PonSVGSprite2D::is_centered);
     
-    ClassDB::bind_method(D_METHOD("set_modulate", "color"), &SVGSprite2D::set_modulate);
-    ClassDB::bind_method(D_METHOD("get_modulate"), &SVGSprite2D::get_modulate);
+    ClassDB::bind_method(D_METHOD("set_modulate", "color"), &PonSVGSprite2D::set_modulate);
+    ClassDB::bind_method(D_METHOD("get_modulate"), &PonSVGSprite2D::get_modulate);
     
-    ClassDB::bind_method(D_METHOD("set_material_override", "material"), &SVGSprite2D::set_material_override);
-    ClassDB::bind_method(D_METHOD("get_material_override"), &SVGSprite2D::get_material_override);
+    ClassDB::bind_method(D_METHOD("set_material_override", "material"), &PonSVGSprite2D::set_material_override);
+    ClassDB::bind_method(D_METHOD("get_material_override"), &PonSVGSprite2D::get_material_override);
     
-    ClassDB::bind_method(D_METHOD("force_update"), &SVGSprite2D::force_update);
-    ClassDB::bind_method(D_METHOD("get_rect"), &SVGSprite2D::get_rect);
+    ClassDB::bind_method(D_METHOD("force_update"), &PonSVGSprite2D::force_update);
+    ClassDB::bind_method(D_METHOD("get_rect"), &PonSVGSprite2D::get_rect);
     
-    ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "svg_resource", PROPERTY_HINT_RESOURCE_TYPE, "SVGResource"), "set_svg_resource", "get_svg_resource");
+    ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "ponsvg_resource", PROPERTY_HINT_RESOURCE_TYPE, "PonSVGResource"), "set_ponsvg_resource", "get_ponsvg_resource");
     ADD_PROPERTY(PropertyInfo(Variant::STRING, "symbol_id"), "set_symbol_id", "get_symbol_id");
     ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "draw_size"), "set_draw_size", "get_draw_size");
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "centered"), "set_centered", "is_centered");
@@ -45,7 +44,7 @@ void SVGSprite2D::_bind_methods() {
     ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material_override", PROPERTY_HINT_RESOURCE_TYPE, "ShaderMaterial"), "set_material_override", "get_material_override");
 }
 
-void SVGSprite2D::_notification(int p_what) {
+void PonSVGSprite2D::_notification(int p_what) {
     switch (p_what) {
         case NOTIFICATION_DRAW: {
             _draw_sprite();
@@ -53,7 +52,7 @@ void SVGSprite2D::_notification(int p_what) {
     }
 }
 
-void SVGSprite2D::_update_texture() {
+void PonSVGSprite2D::_update_texture() {
     if (!needs_update || svg_resource.is_null()) {
         return;
     }
@@ -75,7 +74,7 @@ void SVGSprite2D::_update_texture() {
     needs_update = false;
 }
 
-void SVGSprite2D::_draw_sprite() {
+void PonSVGSprite2D::_draw_sprite() {
     if (svg_resource.is_null()) {
         return;
     }
@@ -102,30 +101,30 @@ void SVGSprite2D::_draw_sprite() {
     }
 }
 
-void SVGSprite2D::set_svg_resource(const Ref<SVGResource> &p_resource) {
+void PonSVGSprite2D::set_ponsvg_resource(const Ref<PonSVGResource> &p_resource) {
     if (svg_resource == p_resource) {
         return;
     }
     
     if (svg_resource.is_valid()) {
-        svg_resource->disconnect("changed", callable_mp(this, &SVGSprite2D::force_update));
+        svg_resource->disconnect("changed", callable_mp(this, &PonSVGSprite2D::force_update));
     }
     
     svg_resource = p_resource;
     
     if (svg_resource.is_valid()) {
-        svg_resource->connect("changed", callable_mp(this, &SVGSprite2D::force_update));
+        svg_resource->connect("changed", callable_mp(this, &PonSVGSprite2D::force_update));
     }
     
     needs_update = true;
     queue_redraw();
 }
 
-Ref<SVGResource> SVGSprite2D::get_svg_resource() const {
+Ref<PonSVGResource> PonSVGSprite2D::get_ponsvg_resource() const {
     return svg_resource;
 }
 
-void SVGSprite2D::set_symbol_id(const String &p_id) {
+void PonSVGSprite2D::set_symbol_id(const String &p_id) {
     if (symbol_id == p_id) {
         return;
     }
@@ -135,11 +134,11 @@ void SVGSprite2D::set_symbol_id(const String &p_id) {
     queue_redraw();
 }
 
-String SVGSprite2D::get_symbol_id() const {
+String PonSVGSprite2D::get_symbol_id() const {
     return symbol_id;
 }
 
-void SVGSprite2D::set_draw_size(const Vector2 &p_size) {
+void PonSVGSprite2D::set_draw_size(const Vector2 &p_size) {
     if (draw_size == p_size) {
         return;
     }
@@ -149,11 +148,11 @@ void SVGSprite2D::set_draw_size(const Vector2 &p_size) {
     queue_redraw();
 }
 
-Vector2 SVGSprite2D::get_draw_size() const {
+Vector2 PonSVGSprite2D::get_draw_size() const {
     return draw_size;
 }
 
-void SVGSprite2D::set_centered(bool p_centered) {
+void PonSVGSprite2D::set_centered(bool p_centered) {
     if (centered == p_centered) {
         return;
     }
@@ -162,11 +161,11 @@ void SVGSprite2D::set_centered(bool p_centered) {
     queue_redraw();
 }
 
-bool SVGSprite2D::is_centered() const {
+bool PonSVGSprite2D::is_centered() const {
     return centered;
 }
 
-void SVGSprite2D::set_modulate(const Color &p_color) {
+void PonSVGSprite2D::set_modulate(const Color &p_color) {
     if (modulate_color == p_color) {
         return;
     }
@@ -175,11 +174,11 @@ void SVGSprite2D::set_modulate(const Color &p_color) {
     queue_redraw();
 }
 
-Color SVGSprite2D::get_modulate() const {
+Color PonSVGSprite2D::get_modulate() const {
     return modulate_color;
 }
 
-void SVGSprite2D::set_material_override(const Ref<ShaderMaterial> &p_material) {
+void PonSVGSprite2D::set_material_override(const Ref<ShaderMaterial> &p_material) {
     if (material_override == p_material) {
         return;
     }
@@ -188,16 +187,16 @@ void SVGSprite2D::set_material_override(const Ref<ShaderMaterial> &p_material) {
     queue_redraw();
 }
 
-Ref<ShaderMaterial> SVGSprite2D::get_material_override() const {
+Ref<ShaderMaterial> PonSVGSprite2D::get_material_override() const {
     return material_override;
 }
 
-void SVGSprite2D::force_update() {
+void PonSVGSprite2D::force_update() {
     needs_update = true;
     queue_redraw();
 }
 
-Rect2 SVGSprite2D::get_rect() const {
+Rect2 PonSVGSprite2D::get_rect() const {
     if (centered) {
         return Rect2(-draw_size / 2.0, draw_size);
     } else {

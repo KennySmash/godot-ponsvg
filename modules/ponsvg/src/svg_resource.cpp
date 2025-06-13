@@ -4,7 +4,7 @@
 #include "core/os/os.h"
 #include "lunasvg.h"
 
-SVGResource::SVGResource() {
+PonPonSVGResource::PonPonSVGResource() {
     last_modification_time = 0;
     needs_cache_clear = false;
     cache_enabled = true;
@@ -12,59 +12,59 @@ SVGResource::SVGResource() {
     lod_bias = 1.0f;
 }
 
-SVGResource::~SVGResource() {
+PonPonSVGResource::~PonPonSVGResource() {
     _clear_cache();
 }
 
-void SVGResource::_bind_methods() {
+void PonPonSVGResource::_bind_methods() {
     // Core loading
-    ClassDB::bind_method(D_METHOD("load_from_file", "path"), &SVGResource::load_from_file);
-    ClassDB::bind_method(D_METHOD("load_from_string", "svg_string"), &SVGResource::load_from_string);
+    ClassDB::bind_method(D_METHOD("load_from_file", "path"), &PonSVGResource::load_from_file);
+    ClassDB::bind_method(D_METHOD("load_from_string", "svg_string"), &PonSVGResource::load_from_string);
     
     // Symbol management
-    ClassDB::bind_method(D_METHOD("get_symbol_ids"), &SVGResource::get_symbol_ids);
-    ClassDB::bind_method(D_METHOD("has_symbol", "id"), &SVGResource::has_symbol);
-    ClassDB::bind_method(D_METHOD("get_symbol_data", "id"), &SVGResource::get_symbol_data);
+    ClassDB::bind_method(D_METHOD("get_symbol_ids"), &PonSVGResource::get_symbol_ids);
+    ClassDB::bind_method(D_METHOD("has_symbol", "id"), &PonSVGResource::has_symbol);
+    ClassDB::bind_method(D_METHOD("get_symbol_data", "id"), &PonSVGResource::get_symbol_data);
     
     // Style overrides
-    ClassDB::bind_method(D_METHOD("override_fill", "element_id", "color"), &SVGResource::override_fill);
-    ClassDB::bind_method(D_METHOD("override_stroke", "element_id", "color"), &SVGResource::override_stroke);
-    ClassDB::bind_method(D_METHOD("override_shader", "element_id", "shader"), &SVGResource::override_shader);
+    ClassDB::bind_method(D_METHOD("override_fill", "element_id", "color"), &PonSVGResource::override_fill);
+    ClassDB::bind_method(D_METHOD("override_stroke", "element_id", "color"), &PonSVGResource::override_stroke);
+    ClassDB::bind_method(D_METHOD("override_shader", "element_id", "shader"), &PonSVGResource::override_shader);
     
-    ClassDB::bind_method(D_METHOD("clear_fill_override", "element_id"), &SVGResource::clear_fill_override);
-    ClassDB::bind_method(D_METHOD("clear_stroke_override", "element_id"), &SVGResource::clear_stroke_override);
-    ClassDB::bind_method(D_METHOD("clear_shader_override", "element_id"), &SVGResource::clear_shader_override);
-    ClassDB::bind_method(D_METHOD("clear_all_overrides"), &SVGResource::clear_all_overrides);
+    ClassDB::bind_method(D_METHOD("clear_fill_override", "element_id"), &PonSVGResource::clear_fill_override);
+    ClassDB::bind_method(D_METHOD("clear_stroke_override", "element_id"), &PonSVGResource::clear_stroke_override);
+    ClassDB::bind_method(D_METHOD("clear_shader_override", "element_id"), &PonSVGResource::clear_shader_override);
+    ClassDB::bind_method(D_METHOD("clear_all_overrides"), &PonSVGResource::clear_all_overrides);
     
     // Getters
-    ClassDB::bind_method(D_METHOD("get_svg_data"), &SVGResource::get_svg_data);
-    ClassDB::bind_method(D_METHOD("get_symbols"), &SVGResource::get_symbols);
-    ClassDB::bind_method(D_METHOD("get_fill_overrides"), &SVGResource::get_fill_overrides);
-    ClassDB::bind_method(D_METHOD("get_stroke_overrides"), &SVGResource::get_stroke_overrides);
-    ClassDB::bind_method(D_METHOD("get_shader_overrides"), &SVGResource::get_shader_overrides);
+    ClassDB::bind_method(D_METHOD("get_svg_data"), &PonSVGResource::get_svg_data);
+    ClassDB::bind_method(D_METHOD("get_symbols"), &PonSVGResource::get_symbols);
+    ClassDB::bind_method(D_METHOD("get_fill_overrides"), &PonSVGResource::get_fill_overrides);
+    ClassDB::bind_method(D_METHOD("get_stroke_overrides"), &PonSVGResource::get_stroke_overrides);
+    ClassDB::bind_method(D_METHOD("get_shader_overrides"), &PonSVGResource::get_shader_overrides);
       // Rasterization
-    ClassDB::bind_method(D_METHOD("rasterize_full", "size"), &SVGResource::rasterize_full);
-    ClassDB::bind_method(D_METHOD("rasterize_symbol", "symbol_id", "size"), &SVGResource::rasterize_symbol);
-    ClassDB::bind_method(D_METHOD("rasterize_element_with_shader", "element_id", "size", "shader"), &SVGResource::rasterize_element_with_shader);
+    ClassDB::bind_method(D_METHOD("rasterize_full", "size"), &PonSVGResource::rasterize_full);
+    ClassDB::bind_method(D_METHOD("rasterize_symbol", "symbol_id", "size"), &PonSVGResource::rasterize_symbol);
+    ClassDB::bind_method(D_METHOD("rasterize_element_with_shader", "element_id", "size", "shader"), &PonSVGResource::rasterize_element_with_shader);
       // Cache management
-    ClassDB::bind_method(D_METHOD("clear_cache"), &SVGResource::clear_cache);
-    ClassDB::bind_method(D_METHOD("get_cache_size"), &SVGResource::get_cache_size);
-    ClassDB::bind_method(D_METHOD("set_cache_enabled", "enabled"), &SVGResource::set_cache_enabled);
-    ClassDB::bind_method(D_METHOD("is_cache_enabled"), &SVGResource::is_cache_enabled);
+    ClassDB::bind_method(D_METHOD("clear_cache"), &PonSVGResource::clear_cache);
+    ClassDB::bind_method(D_METHOD("get_cache_size"), &PonSVGResource::get_cache_size);
+    ClassDB::bind_method(D_METHOD("set_cache_enabled", "enabled"), &PonSVGResource::set_cache_enabled);
+    ClassDB::bind_method(D_METHOD("is_cache_enabled"), &PonSVGResource::is_cache_enabled);
     
     // LOD system
-    ClassDB::bind_method(D_METHOD("set_lod_enabled", "enabled"), &SVGResource::set_lod_enabled);
-    ClassDB::bind_method(D_METHOD("is_lod_enabled"), &SVGResource::is_lod_enabled);
-    ClassDB::bind_method(D_METHOD("set_lod_bias", "bias"), &SVGResource::set_lod_bias);
-    ClassDB::bind_method(D_METHOD("get_lod_bias"), &SVGResource::get_lod_bias);
-    ClassDB::bind_method(D_METHOD("calculate_lod_size", "requested_size"), &SVGResource::calculate_lod_size);
+    ClassDB::bind_method(D_METHOD("set_lod_enabled", "enabled"), &PonSVGResource::set_lod_enabled);
+    ClassDB::bind_method(D_METHOD("is_lod_enabled"), &PonSVGResource::is_lod_enabled);
+    ClassDB::bind_method(D_METHOD("set_lod_bias", "bias"), &PonSVGResource::set_lod_bias);
+    ClassDB::bind_method(D_METHOD("get_lod_bias"), &PonSVGResource::get_lod_bias);
+    ClassDB::bind_method(D_METHOD("calculate_lod_size", "requested_size"), &PonSVGResource::calculate_lod_size);
     
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "cache_enabled"), "set_cache_enabled", "is_cache_enabled");
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "lod_enabled"), "set_lod_enabled", "is_lod_enabled");
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "lod_bias", PROPERTY_HINT_RANGE, "0.1,4.0,0.1"), "set_lod_bias", "get_lod_bias");
 }
 
-Error SVGResource::load_from_file(const String &p_path) {
+Error PonSVGResource::load_from_file(const String &p_path) {
     Ref<FileAccess> file = FileAccess::open(p_path, FileAccess::READ);
     ERR_FAIL_COND_V_MSG(file.is_null(), ERR_FILE_CANT_OPEN, "Cannot open SVG file: " + p_path);
     
@@ -74,7 +74,7 @@ Error SVGResource::load_from_file(const String &p_path) {
     return load_from_string(content);
 }
 
-Error SVGResource::load_from_string(const String &p_svg_string) {
+Error PonSVGResource::load_from_string(const String &p_svg_string) {
     if (p_svg_string.is_empty()) {
         ERR_PRINT("SVG string is empty");
         return ERR_INVALID_PARAMETER;
@@ -88,17 +88,17 @@ Error SVGResource::load_from_string(const String &p_svg_string) {
     return OK;
 }
 
-void SVGResource::_parse_svg() {
+void PonSVGResource::_parse_svg() {
     document = LunaSVGIntegration::load_svg_from_string(svg_data);
     if (!document) {
         ERR_PRINT("Failed to parse SVG data");
     } else {
-        print_line("SVGResource: Successfully parsed SVG document");
+        print_line("PonSVGResource: Successfully parsed SVG document");
         _apply_stored_overrides();
     }
 }
 
-void SVGResource::_extract_symbols() {
+void PonSVGResource::_extract_symbols() {
     symbols.clear();
     
     if (!document) {
@@ -134,10 +134,10 @@ void SVGResource::_extract_symbols() {
         }
     }
     
-    print_line("SVGResource: Extracted " + String::num_int64(symbols.size()) + " symbols");
+    print_line("PonSVGResource: Extracted " + String::num_int64(symbols.size()) + " symbols");
 }
 
-PackedStringArray SVGResource::get_symbol_ids() const {
+PackedStringArray PonSVGResource::get_symbol_ids() const {
     PackedStringArray ids;
     Array keys = symbols.keys();
     for (int i = 0; i < keys.size(); i++) {
@@ -146,18 +146,18 @@ PackedStringArray SVGResource::get_symbol_ids() const {
     return ids;
 }
 
-bool SVGResource::has_symbol(const String &p_id) const {
+bool PonSVGResource::has_symbol(const String &p_id) const {
     return symbols.has(p_id);
 }
 
-Dictionary SVGResource::get_symbol_data(const String &p_id) const {
+Dictionary PonSVGResource::get_symbol_data(const String &p_id) const {
     if (!has_symbol(p_id)) {
         return Dictionary();
     }
     return symbols[p_id];
 }
 
-void SVGResource::override_fill(const String &p_element_id, const Color &p_color) {
+void PonSVGResource::override_fill(const String &p_element_id, const Color &p_color) {
     fill_overrides[p_element_id] = p_color;
     
     // Apply the override immediately if document is loaded
@@ -173,7 +173,7 @@ void SVGResource::override_fill(const String &p_element_id, const Color &p_color
     emit_changed();
 }
 
-void SVGResource::override_stroke(const String &p_element_id, const Color &p_color) {
+void PonSVGResource::override_stroke(const String &p_element_id, const Color &p_color) {
     stroke_overrides[p_element_id] = p_color;
     
     // Apply the override immediately if document is loaded
@@ -189,32 +189,32 @@ void SVGResource::override_stroke(const String &p_element_id, const Color &p_col
     emit_changed();
 }
 
-void SVGResource::override_shader(const String &p_element_id, Ref<Shader> p_shader) {
+void PonSVGResource::override_shader(const String &p_element_id, Ref<Shader> p_shader) {
     shader_overrides[p_element_id] = p_shader;
     // Invalidate cache
     needs_cache_clear = true;
     emit_changed();
 }
 
-void SVGResource::clear_fill_override(const String &p_element_id) {
+void PonSVGResource::clear_fill_override(const String &p_element_id) {
     fill_overrides.erase(p_element_id);
     needs_cache_clear = true;
     emit_changed();
 }
 
-void SVGResource::clear_stroke_override(const String &p_element_id) {
+void PonSVGResource::clear_stroke_override(const String &p_element_id) {
     stroke_overrides.erase(p_element_id);
     needs_cache_clear = true;
     emit_changed();
 }
 
-void SVGResource::clear_shader_override(const String &p_element_id) {
+void PonSVGResource::clear_shader_override(const String &p_element_id) {
     shader_overrides.erase(p_element_id);
     needs_cache_clear = true;
     emit_changed();
 }
 
-void SVGResource::clear_all_overrides() {
+void PonSVGResource::clear_all_overrides() {
     fill_overrides.clear();
     stroke_overrides.clear();
     shader_overrides.clear();
@@ -222,12 +222,12 @@ void SVGResource::clear_all_overrides() {
     emit_changed();
 }
 
-void SVGResource::_clear_cache() const {
+void PonSVGResource::_clear_cache() const {
     cache_entries.clear();
     needs_cache_clear = false;
 }
 
-String SVGResource::_generate_cache_key(const String &p_content_id, const Vector2i &p_size) const {
+String PonSVGResource::_generate_cache_key(const String &p_content_id, const Vector2i &p_size) const {
     String key = p_content_id + "_" + String::num_int64(p_size.x) + "x" + String::num_int64(p_size.y);
     
     // Include override hashes in cache key
@@ -240,7 +240,7 @@ String SVGResource::_generate_cache_key(const String &p_content_id, const Vector
     return key;
 }
 
-Ref<Image> SVGResource::_get_cached_image(const String &p_cache_key, const Vector2i &p_size) const {
+Ref<Image> PonSVGResource::_get_cached_image(const String &p_cache_key, const Vector2i &p_size) const {
     if (!cache_enabled) {
         return Ref<Image>();
     }
@@ -250,7 +250,7 @@ Ref<Image> SVGResource::_get_cached_image(const String &p_cache_key, const Vecto
     }
     
     if (cache_entries.has(p_cache_key)) {
-        SVGCacheEntry entry = cache_entries[p_cache_key];
+        PonSVGCacheEntry entry = cache_entries[p_cache_key];
         if (!entry.is_dirty && entry.size == p_size && entry.image.is_valid()) {
             return entry.image;
         }
@@ -259,12 +259,12 @@ Ref<Image> SVGResource::_get_cached_image(const String &p_cache_key, const Vecto
     return Ref<Image>();
 }
 
-void SVGResource::_store_cached_image(const String &p_cache_key, const Vector2i &p_size, const Ref<Image> &p_image) const {
+void PonSVGResource::_store_cached_image(const String &p_cache_key, const Vector2i &p_size, const Ref<Image> &p_image) const {
     if (!cache_enabled) {
         return;
     }
     
-    SVGCacheEntry entry;
+    PonSVGCacheEntry entry;
     entry.image = p_image;
     entry.size = p_size;
     entry.cache_key = p_cache_key;
@@ -274,28 +274,28 @@ void SVGResource::_store_cached_image(const String &p_cache_key, const Vector2i 
     cache_entries[p_cache_key] = entry;
 }
 
-void SVGResource::clear_cache() {
+void PonSVGResource::clear_cache() {
     _clear_cache();
     emit_changed();
 }
 
-int SVGResource::get_cache_size() const {
+int PonSVGResource::get_cache_size() const {
     return cache_entries.size();
 }
 
-void SVGResource::set_cache_enabled(bool p_enabled) {
+void PonSVGResource::set_cache_enabled(bool p_enabled) {
     cache_enabled = p_enabled;
     if (!p_enabled) {
         _clear_cache();
     }
 }
 
-bool SVGResource::is_cache_enabled() const {
+bool PonSVGResource::is_cache_enabled() const {
     return cache_enabled;
 }
 
 // Enhanced rasterization with caching and LOD support
-Ref<Image> SVGResource::rasterize_full(const Vector2i &p_size) const {
+Ref<Image> PonSVGResource::rasterize_full(const Vector2i &p_size) const {
     ERR_FAIL_COND_V_MSG(document == nullptr, Ref<Image>(), "SVG document not loaded");
     ERR_FAIL_COND_V_MSG(p_size.x <= 0 || p_size.y <= 0, Ref<Image>(), "Invalid size for rasterization");
     
@@ -327,7 +327,7 @@ Ref<Image> SVGResource::rasterize_full(const Vector2i &p_size) const {
     return result;
 }
 
-Ref<Image> SVGResource::rasterize_symbol(const String &p_symbol_id, const Vector2i &p_size) const {
+Ref<Image> PonSVGResource::rasterize_symbol(const String &p_symbol_id, const Vector2i &p_size) const {
     ERR_FAIL_COND_V_MSG(document == nullptr, Ref<Image>(), "SVG document not loaded");
     ERR_FAIL_COND_V_MSG(p_size.x <= 0 || p_size.y <= 0, Ref<Image>(), "Invalid size for rasterization");
     ERR_FAIL_COND_V_MSG(!has_symbol(p_symbol_id), Ref<Image>(), "Symbol not found: " + p_symbol_id);
@@ -367,7 +367,7 @@ Ref<Image> SVGResource::rasterize_symbol(const String &p_symbol_id, const Vector
 }
 
 // Shader override implementation
-Ref<Image> SVGResource::rasterize_element_with_shader(const String &p_element_id, const Vector2i &p_size, Ref<Shader> p_shader) const {
+Ref<Image> PonSVGResource::rasterize_element_with_shader(const String &p_element_id, const Vector2i &p_size, Ref<Shader> p_shader) const {
     ERR_FAIL_COND_V_MSG(document == nullptr, Ref<Image>(), "SVG document not loaded");
     ERR_FAIL_COND_V_MSG(p_size.x <= 0 || p_size.y <= 0, Ref<Image>(), "Invalid size for rasterization");
     ERR_FAIL_COND_V_MSG(p_shader.is_null(), Ref<Image>(), "Shader is null");
@@ -394,7 +394,7 @@ Ref<Image> SVGResource::rasterize_element_with_shader(const String &p_element_id
     return base_image;
 }
 
-void SVGResource::_apply_stored_overrides() {
+void PonSVGResource::_apply_stored_overrides() {
     if (!document) {
         return;
     }
@@ -427,7 +427,7 @@ void SVGResource::_apply_stored_overrides() {
 }
 
 // LOD (Level of Detail) System Implementation
-void SVGResource::set_lod_enabled(bool p_enabled) {
+void PonSVGResource::set_lod_enabled(bool p_enabled) {
     if (lod_enabled != p_enabled) {
         lod_enabled = p_enabled;
         if (lod_enabled) {
@@ -438,11 +438,11 @@ void SVGResource::set_lod_enabled(bool p_enabled) {
     }
 }
 
-bool SVGResource::is_lod_enabled() const {
+bool PonSVGResource::is_lod_enabled() const {
     return lod_enabled;
 }
 
-void SVGResource::set_lod_bias(float p_bias) {
+void PonSVGResource::set_lod_bias(float p_bias) {
     p_bias = CLAMP(p_bias, 0.1f, 4.0f);
     if (lod_bias != p_bias) {
         lod_bias = p_bias;
@@ -453,11 +453,11 @@ void SVGResource::set_lod_bias(float p_bias) {
     }
 }
 
-float SVGResource::get_lod_bias() const {
+float PonSVGResource::get_lod_bias() const {
     return lod_bias;
 }
 
-Vector2i SVGResource::calculate_lod_size(const Vector2i &p_requested_size) const {
+Vector2i PonSVGResource::calculate_lod_size(const Vector2i &p_requested_size) const {
     if (!lod_enabled) {
         return p_requested_size;
     }

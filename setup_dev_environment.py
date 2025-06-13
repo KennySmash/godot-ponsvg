@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Godot Development Environment Setup Script
-Sets up the complete toolchain for building Godot with the SVG module on Windows.
+Sets up the complete toolchain for building Godot with the PonSVG module on Windows.
 """
 
 import os
@@ -28,10 +28,9 @@ class GodotDevSetup:
             with open(settings_file, 'r') as f:
                 return json.load(f)
         else:
-            # Create default settings
-            default_settings = {
+            # Create default settings            default_settings = {
                 "godot_dev_path": "E:\\Dev\\godot-dev",
-                "module_name": "svg_module",
+                "module_name": "ponsvg",
                 "build_target": "editor",
                 "platform": "windows"
             }

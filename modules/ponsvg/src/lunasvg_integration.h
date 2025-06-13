@@ -1,5 +1,5 @@
-#ifndef LUNASVG_INTEGRATION_H
-#define LUNASVG_INTEGRATION_H
+#ifndef LUNAPONSVG_INTEGRATION_H
+#define LUNAPONSVG_INTEGRATION_H
 
 #include "core/object/ref_counted.h"
 #include "core/templates/vector.h"
@@ -47,4 +47,4 @@ public:
     ~LunaSVGIntegration();
 };
 
-#endif // LUNASVG_INTEGRATION_H
+#endif // LUNAPONSVG_INTEGRATION_H

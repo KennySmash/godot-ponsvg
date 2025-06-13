@@ -1,12 +1,12 @@
-# SVG Module Development - Current Status
+# PonSVG Module Development - Current Status
 
 ## ✅ COMPLETED WORK
 
 ### Core Implementation
 - **LunaSVG Integration**: Complete with v3.3.0 API
-- **SVGResource**: Full SVG parsing and rasterization
-- **SVGTexture**: Dynamic texture generation from SVG
-- **SVGSprite2D**: Optimized sprite rendering with symbols
+- **PonSVGResource**: Full SVG parsing and rasterization
+- **PonSVGTexture**: Dynamic texture generation from SVG
+- **PonSVGSprite2D**: Optimized sprite rendering with symbols
 - **Style Override System**: Runtime color/style modifications
 - **Symbol Extraction**: ID-based symbol identification and rendering
 
@@ -23,7 +23,7 @@
 
 ## 🎯 READY FOR USE
 
-The SVG module is **production-ready** and can be:
+The PonSVG module is **production-ready** and can be:
 
 1. **Deployed** to any Godot development environment
 2. **Built** with standard Godot build process
@@ -72,15 +72,15 @@ python tests/test_runner.py build     # Build Godot with module
 
 ### Basic SVG Loading
 ```gdscript
-var svg = SVGResource.new()
+var svg = PonSVGResource.new()
 svg.load_from_file("res://icons.svg")
 var image = svg.rasterize_full(Vector2i(256, 256))
 ```
 
 ### Symbol-based Sprites
 ```gdscript
-var sprite = SVGSprite2D.new()
-sprite.svg_resource = svg
+var sprite = PonSVGSprite2D.new()
+sprite.ponsvg_resource = svg
 sprite.symbol_id = "play_icon"
 sprite.draw_size = Vector2(64, 64)
 add_child(sprite)
@@ -96,7 +96,7 @@ svg.override_stroke("border", Color.BLUE)
 
 ```
 gotot-svg-module/
-├── modules/svg_module/          # Main module source
+├── modules/ponsvg/          # Main module source
 │   ├── src/                     # C++ implementation
 │   │   ├── lunasvg/            # LunaSVG library (v3.3.0)
 │   │   ├── *.cpp/*.h           # Module implementation

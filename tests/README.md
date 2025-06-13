@@ -1,6 +1,6 @@
-# SVG Module Testing Guide
+# PonSVG Module Testing Guide
 
-This directory contains all testing utilities and assets for the SVG module.
+This directory contains all testing utilities and assets for the PonSVG module.
 
 ## Directory Structure
 
@@ -25,7 +25,7 @@ The test runner uses `dev-settings.json` in the project root to configure the de
 ```json
 {
   "godot_dev_path": "E:\\Dev\\godot-dev",
-  "module_name": "svg_module",
+  "module_name": "ponsvg",
   "build_target": "editor",
   "platform": "windows"
 }
@@ -63,7 +63,7 @@ python tests/test_runner.py test
 ### Individual Commands
 
 - `python tests/test_runner.py copy` - Copy module to Godot directory
-- `python tests/test_runner.py build` - Build Godot with SVG module
+- `python tests/test_runner.py build` - Build Godot with PonSVG module
 - `python tests/test_runner.py test` - Run build validation tests
 
 ## GDScript Tests
@@ -134,10 +134,10 @@ When running the complete test suite, you should see:
 
 3. **"Module not found in Godot"**
    - Run `python tests/test_runner.py copy` to install the module
-   - Verify the module appears in `godot-dev/modules/svg_module/`
+   - Verify the module appears in `godot-dev/modules/ponsvg/`
 
 4. **GDScript tests fail**
-   - Ensure you're running tests in a Godot build that includes the SVG module
+   - Ensure you're running tests in a Godot build that includes the PonSVG module
    - Check that test assets are accessible to your Godot project
    - Verify the module is properly registered (check Editor -> Project Settings -> Plugins)
 

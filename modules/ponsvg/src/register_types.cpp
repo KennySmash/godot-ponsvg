@@ -5,17 +5,17 @@
 #include "svg_texture.h"
 #include "svg_sprite.h"
 
-void initialize_svg_module(ModuleInitializationLevel p_level) {
+void initialize_ponsvg_module(ModuleInitializationLevel p_level) {
     if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
         return;
     }
 
-    GDREGISTER_CLASS(SVGResource);
-    GDREGISTER_CLASS(SVGTexture);
-    GDREGISTER_CLASS(SVGSprite2D);
+    GDREGISTER_CLASS(PonPonSVGResource);
+    GDREGISTER_CLASS(PonPonSVGTexture);
+    GDREGISTER_CLASS(PonPonSVGSprite2D);
 }
 
-void uninitialize_svg_module(ModuleInitializationLevel p_level) {
+void uninitialize_ponsvg_module(ModuleInitializationLevel p_level) {
     if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
         return;
     }

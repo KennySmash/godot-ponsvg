@@ -1,4 +1,4 @@
-# SVG Module for Godot 4
+# PonPonSVG Module for Godot 4
 
 A high-performance, native Godot module that enables full SVG rendering capabilities with resolution-independent graphics, symbol-based sprites, dynamic style overrides, and advanced performance optimization.
 
@@ -18,9 +18,9 @@ The module is built around several core components:
 
 ### Core Classes
 
-- **`SVGResource`**: Parses and manages SVG files, handles DOM traversal, style overrides, and performance optimization
-- **`SVGTexture`**: Rasterizes complete SVG documents as `Texture2D` resources with caching
-- **`SVGSprite2D`**: Renders individual symbols or full SVGs as 2D sprites with style controls
+- **`PonPonSVGResource`**: Parses and manages SVG files, handles DOM traversal, style overrides, and performance optimization
+- **`PonPonSVGTexture`**: Rasterizes complete SVG documents as `Texture2D` resources with caching
+- **`PonPonSVGSprite2D`**: Renders individual symbols or full SVGs as 2D sprites with style controls
 - **LunaSVG Integration**: High-performance C++ SVG parser and renderer (v3.3.0)
 
 ### Performance Features
@@ -33,12 +33,12 @@ The module is built around several core components:
 ### Module Structure
 
 ```text
-modules/svg_module/
+modules/ponsvg/
 ├── src/
 │   ├── lunasvg/                  # LunaSVG v3.3.0 library
 │   ├── lunasvg_integration.*     # C++ wrapper for LunaSVG
-│   ├── svg_resource.*            # Core SVG data management + caching
-│   ├── svg_texture.*             # Full SVG rasterization
+│   ├── ponsvg_resource.*            # Core SVG data management + caching
+│   ├── ponsvg_texture.*             # Full SVG rasterization
 │   ├── svg_sprite.*              # Symbol-based sprite rendering
 │   └── register_types.cpp        # Godot class registration
 ├── plugin/                       # Editor integration (future)
@@ -51,34 +51,34 @@ modules/svg_module/
 
 ```gdscript
 # Load an SVG file as a resource
-var svg_resource = SVGResource.new()
-svg_resource.load_from_file("res://icons/ui_icons.svg")
+var ponsvg_resource = PonSVGResource.new()
+ponsvg_resource.load_from_file("res://icons/ui_icons.svg")
 
 # Display the full SVG as a texture
-var svg_texture = SVGTexture.new()
-svg_texture.svg_resource = svg_resource
-svg_texture.render_size = Vector2i(512, 512)
+var ponsvg_texture = PonSVGTexture.new()
+ponsvg_texture.ponsvg_resource = ponsvg_resource
+ponsvg_texture.render_size = Vector2i(512, 512)
 
 # Use in a TextureRect or Sprite2D
-$TextureRect.texture = svg_texture
+$TextureRect.texture = ponsvg_texture
 ```
 
 ### Symbol-Based Sprite System
 
 ```gdscript
 # Load SVG with multiple symbol definitions
-var icon_set = SVGResource.new()
-icon_set.load_from_file("res://ui/icon_library.svg")
+var ponsvg_icon_set = PonSVGResource.new()
+ponsvg_icon_set.load_from_file("res://ui/icon_library.svg")
 
 # Create sprites for individual symbols
-var play_button = SVGSprite2D.new()
-play_button.svg_resource = icon_set
+var play_button = PonSVGSprite2D.new()
+play_button.ponsvg_resource = ponsvg_icon_set
 play_button.symbol_id = "play_icon"
 play_button.draw_size = Vector2(64, 64)
 add_child(play_button)
 
-var pause_button = SVGSprite2D.new()
-pause_button.svg_resource = icon_set
+var pause_button = PonSVGSprite2D.new()
+pause_button.ponsvg_resource = ponsvg_icon_set
 pause_button.symbol_id = "pause_icon"
 pause_button.draw_size = Vector2(64, 64)
 add_child(pause_button)
@@ -88,38 +88,38 @@ add_child(pause_button)
 
 ```gdscript
 # Load SVG with elements that have IDs
-var svg_resource = SVGResource.new()
-svg_resource.load_from_file("res://ui/icons.svg")
+var ponsvg_resource = PonSVGResource.new()
+ponsvg_resource.load_from_file("res://ui/icons.svg")
 
 # Change colors at runtime by element ID
-svg_resource.override_fill("star_path", Color.RED)
-svg_resource.override_stroke("circle_border", Color.BLUE)
+ponsvg_resource.override_fill("star_path", Color.RED)
+ponsvg_resource.override_stroke("circle_border", Color.BLUE)
 
 # Changes are applied immediately and persist
-var modified_texture = SVGTexture.new()
-modified_texture.svg_resource = svg_resource
+var modified_texture = PonSVGTexture.new()
+modified_texture.ponsvg_resource = ponsvg_resource
 modified_texture.render_size = Vector2i(256, 256)
 
 # Clear specific overrides
-svg_resource.clear_fill_override("star_path")
-svg_resource.clear_all_overrides()
+ponsvg_resource.clear_fill_override("star_path")
+ponsvg_resource.clear_all_overrides()
 ```
 
 ### Advanced Symbol Management
 
 ```gdscript
 # Extract all symbol IDs from an SVG
-var symbol_ids = svg_resource.get_symbol_ids()
+var symbol_ids = ponsvg_resource.get_symbol_ids()
 print("Available symbols: ", symbol_ids)
 
 # Get detailed symbol information
 for symbol_id in symbol_ids:
-    var symbol_data = svg_resource.get_symbol_data(symbol_id)
+    var symbol_data = ponsvg_resource.get_symbol_data(symbol_id)
     print("Symbol ", symbol_id, " bounds: ", symbol_data.get("bounds", Rect2()))
 
 # Render individual symbols at different sizes
-var large_icon = svg_resource.rasterize_symbol("icon_star", Vector2i(128, 128))
-var small_icon = svg_resource.rasterize_symbol("icon_star", Vector2i(32, 32))
+var large_icon = ponsvg_resource.rasterize_symbol("icon_star", Vector2i(128, 128))
+var small_icon = ponsvg_resource.rasterize_symbol("icon_star", Vector2i(32, 32))
 ```
 
 ### Responsive UI Icons
@@ -128,13 +128,13 @@ var small_icon = svg_resource.rasterize_symbol("icon_star", Vector2i(32, 32))
 # Icons that scale perfectly for different screen densities
 func update_ui_scale(scale_factor: float):
     for sprite in get_tree().get_nodes_in_group("ui_icons"):
-        if sprite is SVGSprite2D:
+        if sprite is PonSVGSprite2D:
             sprite.draw_size = sprite.draw_size * scale_factor
 ```
 
 ## � API Reference
 
-### SVGResource
+### PonSVGResource
 
 Core class for loading and managing SVG documents.
 
@@ -152,13 +152,13 @@ Core class for loading and managing SVG documents.
 - `Ref<Image> rasterize_full(Vector2i size)` - Render full SVG to image
 - `Ref<Image> rasterize_symbol(String symbol_id, Vector2i size)` - Render symbol to image
 
-### SVGTexture
+### PonSVGTexture
 
 Texture2D implementation for displaying SVG content.
 
 #### Properties
 
-- `SVGResource svg_resource` - The source SVG resource
+- `PonSVGResource ponsvg_resource` - The source SVG resource
 - `Vector2i render_size` - Target rendering resolution
 
 #### Methods
@@ -166,13 +166,13 @@ Texture2D implementation for displaying SVG content.
 - `void force_update()` - Force texture regeneration
 - Standard Texture2D interface (get_width, get_height, etc.)
 
-### SVGSprite2D
+### PonSVGSprite2D
 
 Node2D for displaying SVG content or individual symbols.
 
 #### Properties
 
-- `SVGResource svg_resource` - The source SVG resource
+- `PonSVGResource ponsvg_resource` - The source SVG resource
 - `String symbol_id` - ID of symbol to display (empty for full SVG)
 - `Vector2 draw_size` - Display size in pixels
 - `bool centered` - Whether to center the sprite
@@ -197,35 +197,35 @@ Node2D for displaying SVG content or individual symbols.
 1. **Clone this module into your Godot source tree:**
    ```bash
    cd path/to/godot/modules/
-   git clone https://github.com/your-repo/gotot-svg-module.git svg_module
+   git clone https://github.com/your-repo/gotot-svg-module.git ponsvg
    ```
 
 2. **Initialize the LunaSVG submodule:**
    ```bash
-   cd svg_module/modules/svg_module/src/
+   cd ponsvg/modules/ponsvg/src/
    git clone https://github.com/sammycage/lunasvg.git
    ```
 
 3. **Build Godot with the module:**
    ```bash
    cd path/to/godot/
-   scons platform=windows target=editor module_svg_enabled=yes
+   scons platform=windows target=editor module_ponsvg_enabled=yes
    # or for other platforms:
-   # scons platform=linux target=editor module_svg_enabled=yes
-   # scons platform=macos target=editor module_svg_enabled=yes
+   # scons platform=linux target=editor module_ponsvg_enabled=yes
+   # scons platform=macos target=editor module_ponsvg_enabled=yes
    ```
 
 ### Verification
 
 After building, the following classes should be available in Godot:
-- `SVGResource`
-- `SVGTexture` 
-- `SVGSprite2D`
+- `PonSVGResource`
+- `PonSVGTexture` 
+- `PonSVGSprite2D`
 
 You can test the installation with:
 ```gdscript
-var svg = SVGResource.new()
-print("SVG Module loaded successfully!")
+var svg = PonSVGResource.new()
+print("PonSVG Module loaded successfully!")
 ```
 
 ## 🔧 Advanced Features
@@ -251,8 +251,8 @@ SVG elements can be targeted for style overrides using their `id` attribute:
 
 ```gdscript
 # Target specific elements by ID
-svg_resource.override_fill("main_circle", Color.RED)
-svg_resource.override_stroke("star_path", Color.BLACK)
+ponsvg_resource.override_fill("main_circle", Color.RED)
+ponsvg_resource.override_stroke("star_path", Color.BLACK)
 ```
 
 ### Building from Source
@@ -261,13 +261,13 @@ svg_resource.override_stroke("star_path", Color.BLACK)
 
 ```bash
 cd path/to/godot/modules/
-git clone https://github.com/your-repo/gotot-svg-module.git svg_module
+git clone https://github.com/your-repo/gotot-svg-module.git ponsvg
 ```
 
 2. Initialize the LunaSVG submodule:
 
 ```bash
-cd svg_module
+cd ponsvg
 git submodule update --init --recursive
 ```
 
@@ -275,7 +275,7 @@ git submodule update --init --recursive
 
 ```bash
 cd ../../  # Back to Godot root
-scons platform=windows target=editor module_svg_enabled=yes
+scons platform=windows target=editor module_ponsvg_enabled=yes
 ```
 
 ### Requirements
@@ -333,7 +333,7 @@ Configure your Godot development path in `dev-settings.json`:
 ```json
 {
   "godot_dev_path": "E:\\Dev\\godot-dev",
-  "module_name": "svg_module",
+  "module_name": "ponsvg",
   "build_target": "editor",
   "platform": "windows"
 }
