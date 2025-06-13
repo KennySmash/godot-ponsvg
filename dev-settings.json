@@ -16,10 +16,9 @@
     "enable_visual_tests": true,
     "test_assets_path": "tests/assets",
     "output_path": "tests/output"
-  },
-  "development": {
+  },  "development": {
     "auto_copy_module": true,
-    "auto_build_after_copy": false,
+    "auto_build_after_copy": true,
     "backup_existing_module": true,
     "clean_build": false
   }
