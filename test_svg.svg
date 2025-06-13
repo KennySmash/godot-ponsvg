@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <symbol id="star" viewBox="0 0 24 24">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="gold"/>
+    </symbol>
+    <symbol id="circle" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" fill="blue"/>
+    </symbol>
+  </defs>
+  
+  <rect width="100" height="100" fill="lightgray"/>
+  <use href="#star" x="10" y="10" width="30" height="30"/>
+  <use href="#circle" x="60" y="60" width="30" height="30"/>
+  <text x="50" y="90" text-anchor="middle" font-family="Arial" font-size="12">Test SVG</text>
+</svg>
