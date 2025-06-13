@@ -27,7 +27,8 @@ class SVGModuleTestRunner:
     def load_settings(self):
         """Load development settings from dev-settings.json"""
         settings_path = self.project_root / "dev-settings.json"
-          if not settings_path.exists():
+        
+        if not settings_path.exists():
             print(f"X Settings file not found: {settings_path}")
             print("Please create dev-settings.json with your Godot development path")
             sys.exit(1)
