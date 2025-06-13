@@ -80,17 +80,39 @@ add_child(pause_button)
 ### Dynamic Style Overrides
 
 ```gdscript
-# Change colors at runtime without modifying source files
-svg_resource.override_fill("icon_alert", Color.RED)
-svg_resource.override_stroke("icon_border", Color.BLUE)
+# Load SVG with elements that have IDs
+var svg_resource = SVGResource.new()
+svg_resource.load_from_file("res://ui/icons.svg")
 
-# Apply custom shaders to specific elements
-var glow_shader = load("res://shaders/glow_effect.gdshader")
-svg_resource.override_shader("icon_highlight", glow_shader)
+# Change colors at runtime by element ID
+svg_resource.override_fill("star_path", Color.RED)
+svg_resource.override_stroke("circle_border", Color.BLUE)
 
-# Clear overrides
-svg_resource.clear_fill_override("icon_alert")
+# Changes are applied immediately and persist
+var modified_texture = SVGTexture.new()
+modified_texture.svg_resource = svg_resource
+modified_texture.render_size = Vector2i(256, 256)
+
+# Clear specific overrides
+svg_resource.clear_fill_override("star_path")
 svg_resource.clear_all_overrides()
+```
+
+### Advanced Symbol Management
+
+```gdscript
+# Extract all symbol IDs from an SVG
+var symbol_ids = svg_resource.get_symbol_ids()
+print("Available symbols: ", symbol_ids)
+
+# Get detailed symbol information
+for symbol_id in symbol_ids:
+    var symbol_data = svg_resource.get_symbol_data(symbol_id)
+    print("Symbol ", symbol_id, " bounds: ", symbol_data.get("bounds", Rect2()))
+
+# Render individual symbols at different sizes
+var large_icon = svg_resource.rasterize_symbol("icon_star", Vector2i(128, 128))
+var small_icon = svg_resource.rasterize_symbol("icon_star", Vector2i(32, 32))
 ```
 
 ### Responsive UI Icons
@@ -103,7 +125,84 @@ func update_ui_scale(scale_factor: float):
             sprite.draw_size = sprite.draw_size * scale_factor
 ```
 
-## 🛠️ Installation
+## � API Reference
+
+### SVGResource
+
+Core class for loading and managing SVG documents.
+
+#### Methods
+
+- `Error load_from_file(String path)` - Load SVG from file
+- `Error load_from_string(String svg_data)` - Load SVG from string
+- `PackedStringArray get_symbol_ids()` - Get all symbol IDs
+- `bool has_symbol(String id)` - Check if symbol exists
+- `Dictionary get_symbol_data(String id)` - Get symbol information
+- `void override_fill(String element_id, Color color)` - Override fill color
+- `void override_stroke(String element_id, Color color)` - Override stroke color
+- `void clear_fill_override(String element_id)` - Clear fill override
+- `void clear_all_overrides()` - Clear all overrides
+- `Ref<Image> rasterize_full(Vector2i size)` - Render full SVG to image
+- `Ref<Image> rasterize_symbol(String symbol_id, Vector2i size)` - Render symbol to image
+
+### SVGTexture
+
+Texture2D implementation for displaying SVG content.
+
+#### Properties
+
+- `SVGResource svg_resource` - The source SVG resource
+- `Vector2i render_size` - Target rendering resolution
+
+#### Methods
+
+- `void force_update()` - Force texture regeneration
+- Standard Texture2D interface (get_width, get_height, etc.)
+
+### SVGSprite2D
+
+Node2D for displaying SVG content or individual symbols.
+
+#### Properties
+
+- `SVGResource svg_resource` - The source SVG resource
+- `String symbol_id` - ID of symbol to display (empty for full SVG)
+- `Vector2 draw_size` - Display size in pixels
+- `bool centered` - Whether to center the sprite
+- `Color modulate` - Color modulation
+- `ShaderMaterial material_override` - Custom material
+
+#### Methods
+
+- `void force_update()` - Force sprite regeneration
+- `Rect2 get_rect()` - Get sprite bounds
+
+## 🔧 Advanced Features
+
+### Performance Optimization
+
+The module includes several performance optimizations:
+
+- **Intelligent Caching**: Rendered images are cached and only regenerated when necessary
+- **Lazy Loading**: SVG parsing and symbol extraction happen on-demand
+- **Efficient Updates**: Style overrides trigger minimal re-rendering
+
+### Element Targeting
+
+SVG elements can be targeted for style overrides using their `id` attribute:
+
+```xml
+<svg>
+  <circle id="main_circle" cx="50" cy="50" r="25" fill="blue"/>
+  <path id="star_path" d="..." fill="gold"/>
+</svg>
+```
+
+```gdscript
+# Target specific elements by ID
+svg_resource.override_fill("main_circle", Color.RED)
+svg_resource.override_stroke("star_path", Color.BLACK)
+```
 
 ### Building from Source
 

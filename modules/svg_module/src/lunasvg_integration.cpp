@@ -74,11 +74,87 @@ Vector<lunasvg::Element> LunaSVGIntegration::query_elements(lunasvg::Document* d
     return result;
 }
 
+String LunaSVGIntegration::get_element_attribute(const lunasvg::Element& element, const String& attribute_name) {
+    if (element.isNull()) {
+        return String();
+    }
+    
+    std::string attr_name = attribute_name.utf8().get_data();
+    const std::string& attr_value = element.getAttribute(attr_name);
+    return String(attr_value.c_str());
+}
+
+void LunaSVGIntegration::set_element_attribute(lunasvg::Element& element, const String& attribute_name, const String& value) {
+    if (element.isNull()) {
+        return;
+    }
+    
+    std::string attr_name = attribute_name.utf8().get_data();
+    std::string attr_value = value.utf8().get_data();
+    element.setAttribute(attr_name, attr_value);
+}
+
+bool LunaSVGIntegration::has_element_attribute(const lunasvg::Element& element, const String& attribute_name) {
+    if (element.isNull()) {
+        return false;
+    }
+    
+    std::string attr_name = attribute_name.utf8().get_data();
+    return element.hasAttribute(attr_name);
+}
+
+void LunaSVGIntegration::apply_fill_color(lunasvg::Element& element, const Color& color) {
+    if (element.isNull()) {
+        return;
+    }
+    
+    // Convert Godot Color to CSS color string
+    String color_str = String("rgb(") + 
+                      String::num_int64((int)(color.r * 255)) + "," +
+                      String::num_int64((int)(color.g * 255)) + "," +
+                      String::num_int64((int)(color.b * 255)) + ")";
+    
+    set_element_attribute(element, "fill", color_str);
+}
+
+void LunaSVGIntegration::apply_stroke_color(lunasvg::Element& element, const Color& color) {
+    if (element.isNull()) {
+        return;
+    }
+    
+    // Convert Godot Color to CSS color string
+    String color_str = String("rgb(") + 
+                      String::num_int64((int)(color.r * 255)) + "," +
+                      String::num_int64((int)(color.g * 255)) + "," +
+                      String::num_int64((int)(color.b * 255)) + ")";
+    
+    set_element_attribute(element, "stroke", color_str);
+}
+
 void LunaSVGIntegration::apply_style_overrides(lunasvg::Element element, const Dictionary& style_overrides) {
-    // TODO: Implement style override application
-    // This would involve manipulating CSS properties of the element
-    // For now, this is a placeholder
-    print_line("Style overrides not yet implemented");
+    if (element.isNull()) {
+        return;
+    }
+    
+    // Apply style overrides from the dictionary
+    Array keys = style_overrides.keys();
+    for (int i = 0; i < keys.size(); i++) {
+        String property = keys[i];
+        Variant value = style_overrides[property];
+        
+        if (property == "fill" && value.get_type() == Variant::VECTOR3) {
+            Vector3 color_vec = value;
+            Color color(color_vec.x, color_vec.y, color_vec.z, 1.0f);
+            apply_fill_color(element, color);
+        } else if (property == "stroke" && value.get_type() == Variant::VECTOR3) {
+            Vector3 color_vec = value;
+            Color color(color_vec.x, color_vec.y, color_vec.z, 1.0f);
+            apply_stroke_color(element, color);
+        } else if (value.get_type() == Variant::STRING) {
+            // Generic string attribute setting
+            set_element_attribute(element, property, value);
+        }
+    }
 }
 
 lunasvg::Bitmap LunaSVGIntegration::to_lunasvg_bitmap(const lunasvg::Bitmap& bitmap) {

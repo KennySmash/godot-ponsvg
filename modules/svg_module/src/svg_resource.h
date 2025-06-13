@@ -24,6 +24,7 @@ private:
     
     void _parse_svg();
     void _extract_symbols();
+    void _apply_stored_overrides();
 
 protected:
     static void _bind_methods();

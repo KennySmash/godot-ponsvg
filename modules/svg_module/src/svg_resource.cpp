@@ -73,6 +73,7 @@ void SVGResource::_parse_svg() {
         ERR_PRINT("Failed to parse SVG data");
     } else {
         print_line("SVGResource: Successfully parsed SVG document");
+        _apply_stored_overrides();
     }
 }
 
@@ -87,17 +88,29 @@ void SVGResource::_extract_symbols() {
     Vector<lunasvg::Element> symbol_elements = LunaSVGIntegration::query_elements(document.get(), "symbol");
     
     for (const auto& element : symbol_elements) {
-        // Get the ID attribute if it exists
-        // Note: LunaSVG doesn't provide direct attribute access in the current API
-        // For now, we'll create a placeholder entry
-        // TODO: Implement proper symbol ID extraction when LunaSVG API supports it
+        // Get the ID attribute
+        String symbol_id = LunaSVGIntegration::get_element_attribute(element, "id");
         
-        String symbol_id = "symbol_" + String::num_int64(symbols.size());
-        Dictionary symbol_data;
-        symbol_data["element"] = Variant(); // Placeholder
-        symbol_data["bounds"] = Rect2(); // Placeholder
-        
-        symbols[symbol_id] = symbol_data;
+        if (!symbol_id.is_empty()) {
+            Dictionary symbol_data;
+            
+            // Store element reference (as pointer for internal use)
+            symbol_data["has_element"] = true;
+            
+            // Get viewBox if available
+            String viewbox = LunaSVGIntegration::get_element_attribute(element, "viewBox");
+            if (!viewbox.is_empty()) {
+                symbol_data["viewBox"] = viewbox;
+            }
+            
+            // Calculate bounding box
+            lunasvg::Box bbox = element.getBoundingBox();
+            Rect2 bounds(bbox.x, bbox.y, bbox.w, bbox.h);
+            symbol_data["bounds"] = bounds;
+            
+            symbols[symbol_id] = symbol_data;
+            print_line("Found symbol with ID: " + symbol_id);
+        }
     }
     
     print_line("SVGResource: Extracted " + String::num_int64(symbols.size()) + " symbols");
@@ -125,11 +138,29 @@ Dictionary SVGResource::get_symbol_data(const String &p_id) const {
 
 void SVGResource::override_fill(const String &p_element_id, const Color &p_color) {
     fill_overrides[p_element_id] = p_color;
+    
+    // Apply the override immediately if document is loaded
+    if (document) {
+        lunasvg::Element element = LunaSVGIntegration::find_element_by_id(document.get(), p_element_id);
+        if (!element.isNull()) {
+            LunaSVGIntegration::apply_fill_color(element, p_color);
+        }
+    }
+    
     emit_changed();
 }
 
 void SVGResource::override_stroke(const String &p_element_id, const Color &p_color) {
     stroke_overrides[p_element_id] = p_color;
+    
+    // Apply the override immediately if document is loaded
+    if (document) {
+        lunasvg::Element element = LunaSVGIntegration::find_element_by_id(document.get(), p_element_id);
+        if (!element.isNull()) {
+            LunaSVGIntegration::apply_stroke_color(element, p_color);
+        }
+    }
+    
     emit_changed();
 }
 
@@ -181,6 +212,37 @@ Ref<Image> SVGResource::rasterize_symbol(const String &p_symbol_id, const Vector
         ERR_PRINT("Symbol not found: " + p_symbol_id);
         return Ref<Image>();
     }
+      return LunaSVGIntegration::rasterize_element(element, p_size);
+}
+
+void SVGResource::_apply_stored_overrides() {
+    if (!document) {
+        return;
+    }
     
-    return LunaSVGIntegration::rasterize_element(element, p_size);
+    // Apply stored fill overrides
+    Array fill_keys = fill_overrides.keys();
+    for (int i = 0; i < fill_keys.size(); i++) {
+        String element_id = fill_keys[i];
+        Color color = fill_overrides[element_id];
+        
+        lunasvg::Element element = LunaSVGIntegration::find_element_by_id(document.get(), element_id);
+        if (!element.isNull()) {
+            LunaSVGIntegration::apply_fill_color(element, color);
+        }
+    }
+    
+    // Apply stored stroke overrides
+    Array stroke_keys = stroke_overrides.keys();
+    for (int i = 0; i < stroke_keys.size(); i++) {
+        String element_id = stroke_keys[i];
+        Color color = stroke_overrides[element_id];
+        
+        lunasvg::Element element = LunaSVGIntegration::find_element_by_id(document.get(), element_id);
+        if (!element.isNull()) {
+            LunaSVGIntegration::apply_stroke_color(element, color);
+        }
+    }
+    
+    print_line("Applied " + String::num_int64(fill_keys.size() + stroke_keys.size()) + " style overrides");
 }
