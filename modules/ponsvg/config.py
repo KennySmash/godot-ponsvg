@@ -12,13 +12,15 @@ def configure(env):
     env.Append(CPPPATH=["#modules/ponsvg/src/lunasvg/include"])
     env.Append(CPPPATH=["#modules/ponsvg/src/lunasvg/source"])
     env.Append(CPPPATH=["#modules/ponsvg/src/lunasvg/plutovg/include"])
-    env.Append(CPPPATH=["#modules/ponsvg/src/lunasvg/plutovg/source"])
-
-    # Add necessary compilation flags
+    env.Append(CPPPATH=["#modules/ponsvg/src/lunasvg/plutovg/source"])    # Add necessary compilation flags
     env.Append(CCFLAGS=["-DLUNASVG_BUILD_STATIC"])
+    env.Append(CCFLAGS=["-DPLUTOVG_BUILD_STATIC"])
+    env.Append(CCFLAGS=["-DLUNASVG_BUILD"])
+    env.Append(CCFLAGS=["-DPLUTOVG_BUILD"])
     
     if env["platform"] == "windows":
         env.Append(CCFLAGS=["-DLUNASVG_STATIC"])
+        env.Append(CCFLAGS=["-DPLUTOVG_STATIC"])
 
     # Handle special compiler flags
     if env["target"] == "debug":
