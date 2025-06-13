@@ -1,0 +1,3 @@
+[submodule "modules/ponsvg/src/lunasvg"]
+	path = modules/ponsvg/src/lunasvg
+	url = https://github.com/sammycage/lunasvg.git
