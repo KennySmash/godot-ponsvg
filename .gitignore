@@ -1,0 +1,35 @@
+# Build outputs
+*.o
+*.so
+*.dll
+*.lib
+*.pdb
+*.exp
+
+# Godot build files
+bin/
+.godot/
+*.tmp
+
+# Test outputs
+tests/output/
+*.backup/
+
+# IDE files
+.vscode/
+.vs/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Local development settings (optional override)
+dev-settings.local.json

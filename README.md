@@ -315,15 +315,31 @@ scons platform=windows target=editor module_svg_enabled=yes
 
 ## 🧪 Testing
 
-A comprehensive test suite is included:
+A comprehensive test suite is included in the `tests/` directory:
 
 ```bash
-# Run build verification
-python build_test.py
+# Check development environment status
+python tests/test_runner.py status
 
-# Test with sample SVG
-# (See test_svg.svg for a sample file with symbols)
+# Deploy module to Godot development environment  
+python tests/test_runner.py deploy
+
+# Run full development cycle (copy, build, test)
+python tests/test_runner.py all
 ```
+
+Configure your Godot development path in `dev-settings.json`:
+
+```json
+{
+  "godot_dev_path": "E:\\Dev\\godot-dev",
+  "module_name": "svg_module",
+  "build_target": "editor",
+  "platform": "windows"
+}
+```
+
+See `tests/README.md` for detailed testing documentation and GDScript test examples.
 
 ## 🎨 Advanced Features (Roadmap)
 

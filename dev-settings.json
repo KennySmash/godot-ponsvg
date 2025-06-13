@@ -1,0 +1,26 @@
+{
+  "godot_dev_path": "E:\\Dev\\godot-dev",
+  "module_name": "svg_module",
+  "build_target": "editor",
+  "platform": "windows",
+  "scons_options": {
+    "target": "editor",
+    "platform": "windows", 
+    "module_svg_enabled": "yes",
+    "optimize": "speed",
+    "warnings": "extra",
+    "werror": "no"
+  },
+  "test_settings": {
+    "enable_performance_tests": true,
+    "enable_visual_tests": true,
+    "test_assets_path": "tests/assets",
+    "output_path": "tests/output"
+  },
+  "development": {
+    "auto_copy_module": true,
+    "auto_build_after_copy": false,
+    "backup_existing_module": true,
+    "clean_build": false
+  }
+}

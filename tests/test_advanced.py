@@ -10,10 +10,9 @@ extends Node
 
 func _ready():
     print("Testing Enhanced SVG Module...")
-    
-    # Test loading complex SVG with symbols
+      # Test loading complex SVG with symbols
     var svg_resource = SVGResource.new()
-    var result = svg_resource.load_from_file("res://test_complex.svg")
+    var result = svg_resource.load_from_file("res://tests/assets/test_complex.svg")
     
     if result == OK:
         print("✓ Complex SVG loaded successfully")
@@ -151,7 +150,7 @@ print("- Override clearing")
 print()
 print("To test the module:")
 print("1. Compile Godot with the SVG module")
-print("2. Copy test_complex.svg to your project")
+print("2. Copy tests/assets/test_complex.svg to your project")
 print("3. Run this GDScript code in a scene")
 print()
 print("GDScript test code:")
