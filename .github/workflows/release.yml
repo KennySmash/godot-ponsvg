@@ -1,0 +1,352 @@
+name: Build and Release PonSVG Module
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: true
+        type: string
+      create_release:
+        description: 'Create GitHub release'
+        required: true
+        type: boolean
+        default: true
+
+env:
+  MODULE_NAME: ponsvg
+  GODOT_VERSION: "4.3"
+
+jobs:
+  generate-changelog:
+    runs-on: ubuntu-latest
+    outputs:
+      changelog: ${{ steps.changelog.outputs.changelog }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "Generating changelog for $VERSION"
+          
+          # Get the previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -z "$PREV_TAG" ]; then
+            echo "First release - generating full changelog"
+            CHANGELOG="## What's New in $VERSION
+
+          This is the initial release of the PonSVG module for Godot Engine.
+
+          ### 🚀 Features
+          - SVG loading and parsing using LunaSVG library
+          - Runtime style overrides (fill, stroke colors)
+          - Symbol extraction and rendering
+          - High-quality rasterization with customizable resolution
+          - Efficient caching system
+          - Level-of-detail (LOD) support
+          - Godot-native texture and sprite integration
+
+          ### 📦 Module Components
+          - **PonSVGResource**: Core SVG document handling
+          - **PonSVGTexture**: Texture2D implementation for SVG content
+          - **PonSVGSprite2D**: Sprite2D node for direct SVG rendering
+
+          ### 🔧 Technical Details
+          - Built with LunaSVG v3.3.0
+          - Support for Godot Engine $GODOT_VERSION+
+          - Cross-platform compatibility (Windows, Linux, macOS)
+          - Zero external runtime dependencies"
+          else
+            echo "Generating changelog from $PREV_TAG to $VERSION"
+            CHANGELOG="## What's Changed in $VERSION
+
+          $(git log --pretty=format:"- %s" $PREV_TAG..HEAD | grep -E "(feat|fix|perf|docs|style|refactor|test|chore)" | head -20)
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREV_TAG...$VERSION"
+          fi
+          
+          # Save changelog to file and output
+          echo "$CHANGELOG" > changelog.md
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Upload changelog artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: changelog.md
+
+  build-module:
+    runs-on: ${{ matrix.os }}
+    needs: generate-changelog
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            arch: x86_64
+            extension: ".zip"
+          - os: ubuntu-latest
+            platform: linux
+            arch: x86_64
+            extension: ".tar.gz"
+          - os: macos-latest
+            platform: macos
+            arch: universal
+            extension: ".tar.gz"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config
+
+      - name: Install dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install pkg-config
+
+      - name: Setup MSVC (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: microsoft/setup-msbuild@v1.3
+
+      - name: Verify LunaSVG submodule
+        run: |
+          if [ ! -f "modules/${{ env.MODULE_NAME }}/src/lunasvg/include/lunasvg.h" ]; then
+            echo "LunaSVG submodule not properly initialized"
+            exit 1
+          fi
+          echo "LunaSVG submodule verified"
+        shell: bash
+
+      - name: Build module package
+        run: |
+          python -c "
+          import os
+          import shutil
+          import zipfile
+          import tarfile
+          from pathlib import Path
+          
+          # Create build directory
+          build_dir = Path('build')
+          build_dir.mkdir(exist_ok=True)
+          
+          # Create package directory
+          version = '${{ needs.generate-changelog.outputs.version }}'
+          package_name = f'ponsvg-module-{version}-${{ matrix.platform }}-${{ matrix.arch }}'
+          package_dir = build_dir / package_name
+          package_dir.mkdir(exist_ok=True)
+          
+          # Copy module files
+          module_src = Path('modules') / '${{ env.MODULE_NAME }}'
+          module_dst = package_dir / 'modules' / '${{ env.MODULE_NAME }}'
+          
+          def ignore_patterns(dir, files):
+              ignore = []
+              for file in files:
+                  if file.startswith('.git'):
+                      ignore.append(file)
+                  elif file.endswith(('.pyc', '.pyo', '__pycache__')):
+                      ignore.append(file)
+                  elif file in ['build', 'dist', '.vscode', '.idea']:
+                      ignore.append(file)
+              return ignore
+          
+          shutil.copytree(module_src, module_dst, ignore=ignore_patterns)
+          
+          # Copy documentation and setup files
+          docs_to_copy = [
+              'README.md',
+              'Featureset.md', 
+              'modules/${{ env.MODULE_NAME }}/README.md',
+              'tests/test_module.py'
+          ]
+          
+          for doc in docs_to_copy:
+              if Path(doc).exists():
+                  if '/' in doc:
+                      dest = package_dir / Path(doc).name
+                  else:
+                      dest = package_dir / doc
+                  shutil.copy2(doc, dest)
+          
+          # Create installation instructions
+          install_md = package_dir / 'INSTALLATION.md'
+          with open(install_md, 'w') as f:
+              f.write(f'''# PonSVG Module Installation
+          
+          Version: {version}
+          Platform: ${{ matrix.platform }} (${{ matrix.arch }})
+          
+          ## Installation Steps
+          
+          1. **Copy the module to your Godot source**:
+             ```bash
+             cp -r modules/ponsvg /path/to/godot/modules/
+             ```
+          
+          2. **Build Godot with the module**:
+             ```bash
+             cd /path/to/godot
+             scons platform=${{ matrix.platform }} target=editor module_ponsvg_enabled=yes
+             ```
+          
+          3. **Verify installation** by checking if PonSVGResource class is available in the editor
+          
+          ## Requirements
+          
+          - Godot Engine {os.environ.get('GODOT_VERSION', '4.3')}+ source code
+          - SCons build system
+          - Platform-specific build tools
+          
+          ## Usage Example
+          
+          ```gdscript
+          # Load SVG from file
+          var ponsvg = PonSVGResource.new()
+          ponsvg.load_from_file('res://icon.svg')
+          
+          # Create texture
+          var texture = PonSVGTexture.new()
+          texture.ponsvg_resource = ponsvg
+          texture.render_size = Vector2i(256, 256)
+          
+          # Use in sprite
+          var sprite = PonSVGSprite2D.new()
+          sprite.ponsvg_resource = ponsvg
+          add_child(sprite)
+          ```
+          
+          For more examples, see test_module.py
+          ''')
+          
+          # Create package archive
+          if '${{ matrix.extension }}' == '.zip':
+              archive_path = build_dir / f'{package_name}.zip'
+              with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+                  for file_path in package_dir.rglob('*'):
+                      if file_path.is_file():
+                          arcname = file_path.relative_to(build_dir)
+                          zf.write(file_path, arcname)
+          else:
+              archive_path = build_dir / f'{package_name}.tar.gz'
+              with tarfile.open(archive_path, 'w:gz') as tf:
+                  tf.add(package_dir, arcname=package_name)
+          
+          print(f'Created package: {archive_path}')
+          print(f'::set-output name=package_path::{archive_path}')
+          print(f'::set-output name=package_name::{package_name}')
+          "
+        shell: bash
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ponsvg-module-${{ matrix.platform }}-${{ matrix.arch }}
+          path: build/ponsvg-module-*
+          retention-days: 30
+
+  create-release:
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
+    runs-on: ubuntu-latest
+    needs: [generate-changelog, build-module]
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p final-assets
+          find release-assets -name "*.zip" -o -name "*.tar.gz" | while read file; do
+            cp "$file" final-assets/
+          done
+          ls -la final-assets/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.generate-changelog.outputs.version }}
+          name: PonSVG Module ${{ needs.generate-changelog.outputs.version }}
+          body: ${{ needs.generate-changelog.outputs.changelog }}
+          files: final-assets/*
+          draft: false
+          prerelease: ${{ contains(needs.generate-changelog.outputs.version, 'alpha') || contains(needs.generate-changelog.outputs.version, 'beta') || contains(needs.generate-changelog.outputs.version, 'rc') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-documentation:
+    runs-on: ubuntu-latest
+    needs: [generate-changelog, create-release]
+    if: always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update version in documentation
+        run: |
+          VERSION="${{ needs.generate-changelog.outputs.version }}"
+          
+          # Update README.md with latest version
+          if [ -f "README.md" ]; then
+            sed -i "s/Version: .*/Version: $VERSION/" README.md || true
+            sed -i "s/ponsvg-module-v[0-9.]*/ponsvg-module-$VERSION/" README.md || true
+          fi
+          
+          # Update PROJECT_STATUS.md
+          if [ -f "PROJECT_STATUS.md" ]; then
+            sed -i "s/Current Version: .*/Current Version: $VERSION/" PROJECT_STATUS.md || true
+            echo "- $VERSION: Released $(date '+%Y-%m-%d')" >> PROJECT_STATUS.md || true
+          fi
+
+      - name: Commit documentation updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          if [ -n "$(git status --porcelain)" ]; then
+            git add README.md PROJECT_STATUS.md
+            git commit -m "docs: update version references to ${{ needs.generate-changelog.outputs.version }}"
+            git push
+          else
+            echo "No documentation changes to commit"
+          fi

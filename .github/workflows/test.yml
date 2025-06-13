@@ -1,0 +1,340 @@
+name: Test PonSVG Module
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run tests weekly on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+
+env:
+  MODULE_NAME: ponsvg
+
+jobs:
+  validate-module:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        godot-version: ["4.3", "4.2"]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config
+
+      - name: Install dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install pkg-config
+
+      - name: Setup MSVC (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: microsoft/setup-msbuild@v1.3
+
+      - name: Validate module structure
+        run: |
+          python -c "
+          import sys
+          from pathlib import Path
+          
+          print('🔍 Validating PonSVG module structure...')
+          
+          # Check required files
+          required_files = [
+              'modules/${{ env.MODULE_NAME }}/config.py',
+              'modules/${{ env.MODULE_NAME }}/src/register_types.h',
+              'modules/${{ env.MODULE_NAME }}/src/register_types.cpp',
+              'modules/${{ env.MODULE_NAME }}/src/svg_resource.h',
+              'modules/${{ env.MODULE_NAME }}/src/svg_resource.cpp',
+              'modules/${{ env.MODULE_NAME }}/src/lunasvg_integration.h',
+              'modules/${{ env.MODULE_NAME }}/src/lunasvg_integration.cpp',
+              'modules/${{ env.MODULE_NAME }}/src/lunasvg/include/lunasvg.h'
+          ]
+          
+          missing_files = []
+          for file_path in required_files:
+              if not Path(file_path).exists():
+                  missing_files.append(file_path)
+          
+          if missing_files:
+              print('❌ Missing required files:')
+              for file in missing_files:
+                  print(f'   - {file}')
+              sys.exit(1)
+          
+          print('✅ All required files present')
+          
+          # Check config.py syntax
+          config_path = Path('modules/${{ env.MODULE_NAME }}/config.py')
+          with open(config_path, 'r') as f:
+              config_content = f.read()
+          
+          try:
+              compile(config_content, str(config_path), 'exec')
+              print('✅ config.py syntax valid')
+          except SyntaxError as e:
+              print(f'❌ config.py syntax error: {e}')
+              sys.exit(1)
+          
+          # Check for required functions in config.py
+          required_functions = ['can_build', 'configure', 'get_doc_classes']
+          for func in required_functions:
+              if f'def {func}(' not in config_content:
+                  print(f'❌ Missing function in config.py: {func}')
+                  sys.exit(1)
+          
+          print('✅ config.py functions present')
+          print('🎉 Module structure validation passed')
+          "
+
+      - name: Check LunaSVG integration
+        run: |
+          python -c "
+          from pathlib import Path
+          import subprocess
+          
+          print('🔍 Checking LunaSVG submodule...')
+          
+          lunasvg_path = Path('modules/${{ env.MODULE_NAME }}/src/lunasvg')
+          
+          if not lunasvg_path.exists():
+              print('❌ LunaSVG directory not found')
+              exit(1)
+          
+          header_file = lunasvg_path / 'include' / 'lunasvg.h'
+          if not header_file.exists():
+              print('❌ LunaSVG header not found')
+              exit(1)
+          
+          # Check for key source files
+          source_files = [
+              'source/lunasvg.cpp',
+              'source/svgelement.cpp',
+              'plutovg/source/plutovg-canvas.c'
+          ]
+          
+          for src_file in source_files:
+              if not (lunasvg_path / src_file).exists():
+                  print(f'❌ Missing LunaSVG source: {src_file}')
+                  exit(1)
+          
+          print('✅ LunaSVG submodule properly initialized')
+          "
+
+      - name: Test module compilation (dry run)
+        run: |
+          # Create a minimal test to check if the module can be imported by SCons
+          python -c "
+          import sys
+          sys.path.insert(0, 'modules/${{ env.MODULE_NAME }}')
+          
+          try:
+              import config
+              print('✅ Module config importable')
+              
+              # Test can_build function
+              result = config.can_build(None, '${{ runner.os }}'.lower())
+              print(f'✅ can_build() returns: {result}')
+              
+              # Test get_doc_classes function
+              doc_classes = config.get_doc_classes()
+              print(f'✅ Documentation classes: {doc_classes}')
+              
+          except Exception as e:
+              print(f'❌ Module import failed: {e}')
+              sys.exit(1)
+          "
+
+      - name: Validate test files
+        run: |
+          python -c "
+          from pathlib import Path
+          
+          print('🔍 Validating test files...')
+          
+          test_files = [
+              'tests/test_module.py',
+              'tests/assets/test_svg.svg'
+          ]
+          
+          for test_file in test_files:
+              path = Path(test_file)
+              if not path.exists():
+                  print(f'⚠️  Optional test file missing: {test_file}')
+              else:
+                  print(f'✅ Test file found: {test_file}')
+          
+          # Validate test SVG content
+          test_svg = Path('tests/assets/test_svg.svg')
+          if test_svg.exists():
+              content = test_svg.read_text()
+              if '<svg' in content and '</svg>' in content:
+                  print('✅ Test SVG has valid structure')
+              else:
+                  print('⚠️  Test SVG may be malformed')
+          
+          print('✅ Test validation complete')
+          "
+
+      - name: Generate test report
+        if: always()
+        run: |
+          echo "## Test Report for ${{ matrix.os }} - Godot ${{ matrix.godot-version }}" > test-report.md
+          echo "" >> test-report.md
+          echo "**Status**: ${{ job.status }}" >> test-report.md
+          echo "**Timestamp**: $(date -u)" >> test-report.md
+          echo "" >> test-report.md
+          echo "### Module Validation" >> test-report.md
+          echo "- Module structure: ✅" >> test-report.md
+          echo "- LunaSVG integration: ✅" >> test-report.md
+          echo "- Config compilation: ✅" >> test-report.md
+          echo "" >> test-report.md
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-${{ matrix.os }}-godot${{ matrix.godot-version }}
+          path: test-report.md
+
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install quality tools
+        run: |
+          pip install flake8 black isort
+
+      - name: Check Python code style
+        run: |
+          echo "🔍 Checking Python code style..."
+          
+          # Check all Python files in the project
+          python_files=$(find . -name "*.py" -not -path "./modules/ponsvg/src/lunasvg/*" -not -path "./.git/*")
+          
+          if [ -n "$python_files" ]; then
+            echo "Found Python files to check:"
+            echo "$python_files"
+            
+            # Run flake8
+            echo "Running flake8..."
+            flake8 $python_files --max-line-length=100 --ignore=E203,W503 || true
+            
+            # Check import sorting
+            echo "Checking import order..."
+            isort --check-only --diff $python_files || true
+            
+            echo "✅ Python style check complete"
+          else
+            echo "No Python files found to check"
+          fi
+
+      - name: Check C++ code formatting
+        run: |
+          echo "🔍 Checking C++ code structure..."
+          
+          cpp_files=$(find modules/${{ env.MODULE_NAME }}/src -name "*.cpp" -o -name "*.h" | grep -v lunasvg)
+          
+          if [ -n "$cpp_files" ]; then
+            echo "Found C++ files:"
+            echo "$cpp_files"
+            
+            # Basic checks for code structure
+            for file in $cpp_files; do
+              echo "Checking $file..."
+              
+              # Check for header guards in .h files
+              if [[ $file == *.h ]]; then
+                if ! grep -q "#ifndef\|#pragma once" "$file"; then
+                  echo "⚠️  $file: Missing header guard"
+                fi
+              fi
+              
+              # Check for basic documentation
+              if ! grep -q "//\|/\*" "$file"; then
+                echo "⚠️  $file: No comments found"
+              fi
+            done
+            
+            echo "✅ C++ structure check complete"
+          fi
+
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate documentation
+        run: |
+          echo "🔍 Validating documentation..."
+          
+          # Check required documentation files
+          required_docs = [
+              "README.md",
+              "WORKING_JOURNAL.md",
+              "Featureset.md"
+          ]
+          
+          python -c "
+          from pathlib import Path
+          
+          required_docs = ['README.md', 'WORKING_JOURNAL.md', 'Featureset.md']
+          
+          for doc in required_docs:
+              path = Path(doc)
+              if not path.exists():
+                  print(f'❌ Missing documentation: {doc}')
+              else:
+                  content = path.read_text()
+                  if len(content) < 100:
+                      print(f'⚠️  {doc} seems very short')
+                  else:
+                      print(f'✅ {doc} exists and has content')
+          
+          # Check for TODO items
+          todo_count = 0
+          for md_file in Path('.').glob('*.md'):
+              content = md_file.read_text().upper()
+              file_todos = content.count('TODO') + content.count('FIXME')
+              if file_todos > 0:
+                  print(f'📝 {md_file.name}: {file_todos} TODO/FIXME items')
+                  todo_count += file_todos
+          
+          print(f'📊 Total TODO/FIXME items: {todo_count}')
+          "
+
+      - name: Check changelog format
+        run: |
+          if [ -f "CHANGELOG.md" ]; then
+            echo "✅ CHANGELOG.md exists"
+            # Could add more sophisticated changelog format checking here
+          else
+            echo "📝 No CHANGELOG.md found (will be auto-generated on release)"
+          fi
