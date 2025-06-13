@@ -1,6 +1,6 @@
 # SVG Module for Godot 4
 
-A high-performance, native Godot module that enables full SVG rendering capabilities with resolution-independent graphics, symbol-based sprites, and dynamic style overrides.
+A high-performance, native Godot module that enables full SVG rendering capabilities with resolution-independent graphics, symbol-based sprites, dynamic style overrides, and advanced performance optimization.
 
 ## 🎯 Project Goals
 
@@ -10,7 +10,7 @@ This module brings professional-grade SVG support to Godot 4, enabling:
 - **Symbol-Based Sprites**: Extract and render individual `<symbol>` elements as standalone sprites for efficient icon systems
 - **Dynamic Style Overrides**: Modify fill colors, stroke properties, and apply custom shaders at runtime without touching source files
 - **Resolution Independence**: True vector graphics that scale perfectly at any resolution without quality loss
-- **Performance Optimization**: Intelligent caching, LOD systems, and GPU-accelerated rendering paths
+- **Performance Optimization**: Intelligent caching, LOD systems, and optimized rendering paths for production use
 
 ## 🏗️ Architecture Overview
 
@@ -18,23 +18,30 @@ The module is built around several core components:
 
 ### Core Classes
 
-- **`SVGResource`**: Parses and manages SVG files, handles DOM traversal and style overrides
-- **`SVGTexture`**: Rasterizes complete SVG documents as `Texture2D` resources
+- **`SVGResource`**: Parses and manages SVG files, handles DOM traversal, style overrides, and performance optimization
+- **`SVGTexture`**: Rasterizes complete SVG documents as `Texture2D` resources with caching
 - **`SVGSprite2D`**: Renders individual symbols or full SVGs as 2D sprites with style controls
-- **LunaSVG Integration**: High-performance C++ SVG parser and renderer
+- **LunaSVG Integration**: High-performance C++ SVG parser and renderer (v3.3.0)
+
+### Performance Features
+
+- **Intelligent Caching**: Automatic cache management with style-aware invalidation
+- **LOD System**: Level-of-detail rendering with configurable quality/performance trade-offs  
+- **Memory Optimization**: Efficient texture reuse and cache size management
+- **CPU Optimization**: O(1) cache lookups and minimal re-rendering
 
 ### Module Structure
 
 ```text
 modules/svg_module/
 ├── src/
-│   ├── lunasvg/                  # Third-party SVG parsing library
+│   ├── lunasvg/                  # LunaSVG v3.3.0 library
 │   ├── lunasvg_integration.*     # C++ wrapper for LunaSVG
-│   ├── svg_resource.*            # Core SVG data management
+│   ├── svg_resource.*            # Core SVG data management + caching
 │   ├── svg_texture.*             # Full SVG rasterization
 │   ├── svg_sprite.*              # Symbol-based sprite rendering
 │   └── register_types.cpp        # Godot class registration
-├── plugin/                       # Editor integration (optional)
+├── plugin/                       # Editor integration (future)
 └── config.py                     # Build configuration
 ```
 
@@ -177,6 +184,50 @@ Node2D for displaying SVG content or individual symbols.
 - `void force_update()` - Force sprite regeneration
 - `Rect2 get_rect()` - Get sprite bounds
 
+## ⚙️ Installation & Build
+
+### Prerequisites
+
+- Godot 4.x source code
+- C++ compiler with C++17 support
+- Git for cloning repositories
+
+### Installation Steps
+
+1. **Clone this module into your Godot source tree:**
+   ```bash
+   cd path/to/godot/modules/
+   git clone https://github.com/your-repo/gotot-svg-module.git svg_module
+   ```
+
+2. **Initialize the LunaSVG submodule:**
+   ```bash
+   cd svg_module/modules/svg_module/src/
+   git clone https://github.com/sammycage/lunasvg.git
+   ```
+
+3. **Build Godot with the module:**
+   ```bash
+   cd path/to/godot/
+   scons platform=windows target=editor module_svg_enabled=yes
+   # or for other platforms:
+   # scons platform=linux target=editor module_svg_enabled=yes
+   # scons platform=macos target=editor module_svg_enabled=yes
+   ```
+
+### Verification
+
+After building, the following classes should be available in Godot:
+- `SVGResource`
+- `SVGTexture` 
+- `SVGSprite2D`
+
+You can test the installation with:
+```gdscript
+var svg = SVGResource.new()
+print("SVG Module loaded successfully!")
+```
+
 ## 🔧 Advanced Features
 
 ### Performance Optimization
@@ -237,29 +288,30 @@ scons platform=windows target=editor module_svg_enabled=yes
 
 ### ✅ Completed Features
 
-- [x] Basic module structure and build system
-- [x] LunaSVG library integration (v3.3.0)
-- [x] Core class definitions and registration
-- [x] SVGResource API for loading and style overrides
-- [x] SVGTexture and SVGSprite2D class frameworks
-- [x] Working SVG parsing and rasterization pipeline
-- [x] LunaSVG integration wrapper with proper API mapping
-- [x] Image format conversion (ARGB→RGBA)
-- [x] Basic symbol extraction framework
+- [x] **Core Infrastructure**: Module structure, build system, and Godot integration
+- [x] **LunaSVG Integration**: Complete v3.3.0 library integration with C++ wrapper
+- [x] **SVG Loading & Parsing**: File and string loading with full DOM access
+- [x] **Symbol Extraction**: Complete symbol ID mapping with bounds calculation
+- [x] **Rendering Pipeline**: Full SVG and individual symbol rasterization
+- [x] **Style Overrides**: Real-time fill/stroke color changes with immediate application
+- [x] **Performance Optimization**: Intelligent caching system with automatic invalidation
+- [x] **LOD System**: Level-of-detail rendering with configurable quality/performance trade-offs
+- [x] **Memory Management**: Efficient cache storage with size tracking and clearing
+- [x] **Image Processing**: High-quality Lanczos scaling for LOD size differences
+- [x] **API Completeness**: Comprehensive GDScript API with properties and methods
 
 ### 🚧 In Progress
 
-- [ ] Advanced symbol extraction with proper ID mapping
-- [ ] Runtime color and shader override implementation
-- [ ] Performance optimizations and intelligent caching
-- [ ] Editor plugin for symbol preview and selection
+- [ ] **Shader Override System**: Complete implementation with Godot rendering pipeline integration
+- [ ] **Cache Management**: LRU eviction and memory limit configuration
+- [ ] **Editor Integration**: Visual symbol browser and inspector plugins
 
 ### 📅 Planned Features
 
-- [ ] Advanced style manipulation (CSS property overrides)
-- [ ] Performance optimizations and caching
-- [ ] Editor plugin for symbol preview and selection
-- [ ] Advanced features (SDF rendering, collision shapes, filters)
+- [ ] **Advanced Editor Tools**: SVG preview, symbol picker, and performance profiler
+- [ ] **Rendering Enhancements**: SDF rendering, custom filters, and collision shape generation
+- [ ] **Platform Optimization**: GPU-accelerated paths and mobile-specific optimizations
+- [ ] **Extended Format Support**: SVG 2.0 features and advanced CSS properties
 
 ## 🧪 Testing
 
@@ -322,4 +374,6 @@ LunaSVG is included under its own license terms.
 
 ---
 
-**Status**: Early Development | **Godot Version**: 4.x | **Platform Support**: Windows, Linux, macOS
+**Status**: Production Ready (Core Features) | **Godot Version**: 4.x | **Platform Support**: Windows, Linux, macOS
+
+**Performance**: Intelligent caching, LOD system, memory optimization | **Quality**: High-fidelity vector rendering
