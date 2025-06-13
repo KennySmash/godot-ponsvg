@@ -393,3 +393,46 @@ LunaSVG is included under its own license terms.
 **Status**: Production Ready (Core Features) | **Godot Version**: 4.x | **Platform Support**: Windows, Linux, macOS
 
 **Performance**: Intelligent caching, LOD system, memory optimization | **Quality**: High-fidelity vector rendering
+
+## 🔄 Release & Automation
+
+### Automated Releases
+
+This project uses GitHub Actions for automated building and releasing:
+
+- **Release Creation**: Create releases by pushing git tags (e.g., `git tag v1.0.0 && git push origin v1.0.0`)
+- **Multi-platform Builds**: Automatic builds for Windows, Linux, and macOS
+- **Auto-generated Changelogs**: Smart changelog generation from commit history
+- **Cross-platform Packages**: ZIP for Windows, tar.gz for Unix systems
+
+### Local Development
+
+Use the provided PowerShell script for local builds:
+
+```powershell
+# Test and validate module
+.\build_package.ps1 -Test
+
+# Create release package
+.\build_package.ps1 -Package -Version "v1.0.0"
+
+# Clean build artifacts
+.\build_package.ps1 -Clean
+```
+
+### Manual Release Process
+
+1. **Tag the release**:
+
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+2. **GitHub Actions automatically**:
+   - Validates module structure
+   - Builds packages for all platforms
+   - Generates changelog from commits
+   - Creates GitHub release with assets
+
+3. **Download and install** the module package for your platform
