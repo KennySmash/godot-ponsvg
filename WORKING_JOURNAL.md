@@ -802,4 +802,56 @@ This automation system ensures that every release is properly tested, documented
 
 ---
 
+## 2025-06-13 - GDExtension Architecture Migration
+
+### 🔄 MAJOR ARCHITECTURE CHANGE: Built-in Module → GDExtension
+
+**Goal**: Convert PonSVG from built-in Godot module to standalone GDExtension for compatibility with official Godot builds.
+
+**Benefits**:
+- ✅ Works with official Godot releases (no source compilation required)
+- ✅ Easy installation via plugin manager or simple file copy
+- ✅ Distributable as pre-compiled binaries
+- ✅ Faster development iteration (no full Godot rebuild)
+- ✅ Cross-platform distribution support
+
+### Architecture Changes Required
+
+#### 1. GDExtension Structure Setup 🔧
+- Convert module to GDExtension format
+- Create `.gdextension` configuration file
+- Update binding system to use GDExtension API
+- Restructure build system for shared library output
+
+#### 2. CMake Build System 🔧
+- Replace SCons module build with CMake
+- Multi-platform shared library compilation
+- Automated dependency management (LunaSVG/PlutoVG)
+- Package generation with platform-specific binaries
+
+#### 3. Updated Source Architecture 🔧
+- Convert ClassDB bindings to GDExtension format
+- Update registration system
+- Maintain API compatibility
+- Cross-platform compatibility layer
+
+### Implementation Plan
+
+**Phase 1**: GDExtension Configuration
+- [ ] Create `.gdextension` file
+- [ ] Setup CMakeLists.txt for shared library build
+- [ ] Create GDExtension entry point
+
+**Phase 2**: Source Code Migration  
+- [ ] Convert register_types to GDExtension format
+- [ ] Update class bindings
+- [ ] Test compilation on Windows/Linux
+
+**Phase 3**: Build & Distribution
+- [ ] Automated build scripts for all platforms
+- [ ] Package generation (addon format)
+- [ ] GitHub Actions for releases
+
+---
+
 ## Previous Sessions
