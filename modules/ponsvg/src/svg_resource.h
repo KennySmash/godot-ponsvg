@@ -41,10 +41,10 @@ private:
     // LOD system
     bool lod_enabled;
     float lod_bias;
-    
-    void _parse_svg();
+      void _parse_svg();
     void _extract_symbols();
     void _apply_stored_overrides();
+    void _apply_overrides_to_element(lunasvg::Element& element, const String& element_id) const;
     void _clear_cache() const;
     String _generate_cache_key(const String &p_content_id, const Vector2i &p_size) const;
     Ref<Image> _get_cached_image(const String &p_cache_key, const Vector2i &p_size) const;

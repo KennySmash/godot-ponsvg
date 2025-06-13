@@ -108,11 +108,20 @@ void LunaSVGIntegration::apply_fill_color(lunasvg::Element& element, const Color
         return;
     }
     
-    // Convert Godot Color to CSS color string
-    String color_str = String("rgb(") + 
-                      String::num_int64((int)(color.r * 255)) + "," +
-                      String::num_int64((int)(color.g * 255)) + "," +
-                      String::num_int64((int)(color.b * 255)) + ")";
+    // Convert Godot Color to CSS color string with alpha support
+    String color_str;
+    if (color.a < 1.0f) {
+        color_str = String("rgba(") + 
+                   String::num_int64((int)(color.r * 255)) + "," +
+                   String::num_int64((int)(color.g * 255)) + "," +
+                   String::num_int64((int)(color.b * 255)) + "," +
+                   String::num(color.a) + ")";
+    } else {
+        color_str = String("rgb(") + 
+                   String::num_int64((int)(color.r * 255)) + "," +
+                   String::num_int64((int)(color.g * 255)) + "," +
+                   String::num_int64((int)(color.b * 255)) + ")";
+    }
     
     set_element_attribute(element, "fill", color_str);
 }
@@ -122,11 +131,20 @@ void LunaSVGIntegration::apply_stroke_color(lunasvg::Element& element, const Col
         return;
     }
     
-    // Convert Godot Color to CSS color string
-    String color_str = String("rgb(") + 
-                      String::num_int64((int)(color.r * 255)) + "," +
-                      String::num_int64((int)(color.g * 255)) + "," +
-                      String::num_int64((int)(color.b * 255)) + ")";
+    // Convert Godot Color to CSS color string with alpha support
+    String color_str;
+    if (color.a < 1.0f) {
+        color_str = String("rgba(") + 
+                   String::num_int64((int)(color.r * 255)) + "," +
+                   String::num_int64((int)(color.g * 255)) + "," +
+                   String::num_int64((int)(color.b * 255)) + "," +
+                   String::num(color.a) + ")";
+    } else {
+        color_str = String("rgb(") + 
+                   String::num_int64((int)(color.r * 255)) + "," +
+                   String::num_int64((int)(color.g * 255)) + "," +
+                   String::num_int64((int)(color.b * 255)) + ")";
+    }
     
     set_element_attribute(element, "stroke", color_str);
 }

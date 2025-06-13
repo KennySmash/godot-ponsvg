@@ -345,12 +345,14 @@ Ref<Image> PonSVGResource::rasterize_symbol(const String &p_symbol_id, const Vec
         }
         return cached;
     }
-    
-    lunasvg::Element element = LunaSVGIntegration::find_element_by_id(document.get(), p_symbol_id);
+      lunasvg::Element element = LunaSVGIntegration::find_element_by_id(document.get(), p_symbol_id);
     if (element.isNull()) {
         ERR_PRINT("Could not find symbol element with ID: " + p_symbol_id);
         return Ref<Image>();
     }
+    
+    // Apply style overrides before rasterization
+    _apply_overrides_to_element(element, p_symbol_id);
     
     Ref<Image> result = LunaSVGIntegration::rasterize_element(element, actual_size);
     if (result.is_valid()) {
@@ -371,14 +373,16 @@ Ref<Image> PonSVGResource::rasterize_element_with_shader(const String &p_element
     ERR_FAIL_COND_V_MSG(document == nullptr, Ref<Image>(), "SVG document not loaded");
     ERR_FAIL_COND_V_MSG(p_size.x <= 0 || p_size.y <= 0, Ref<Image>(), "Invalid size for rasterization");
     ERR_FAIL_COND_V_MSG(p_shader.is_null(), Ref<Image>(), "Shader is null");
-    
-    // For now, this renders the element normally and then applies the shader as a post-process
+      // For now, this renders the element normally and then applies the shader as a post-process
     // A more advanced implementation would integrate with Godot's rendering pipeline
     lunasvg::Element element = LunaSVGIntegration::find_element_by_id(document.get(), p_element_id);
     if (element.isNull()) {
         ERR_PRINT("Could not find element with ID: " + p_element_id);
         return Ref<Image>();
     }
+    
+    // Apply style overrides before rasterization
+    _apply_overrides_to_element(element, p_element_id);
     
     // First, render the element normally
     Ref<Image> base_image = LunaSVGIntegration::rasterize_element(element, p_size);
@@ -424,6 +428,24 @@ void PonSVGResource::_apply_stored_overrides() {
     }
     
     print_line("Applied " + String::num_int64(fill_keys.size() + stroke_keys.size()) + " style overrides");
+}
+
+void PonSVGResource::_apply_overrides_to_element(lunasvg::Element& element, const String& element_id) const {
+    if (element.isNull()) {
+        return;
+    }
+    
+    // Apply fill override if exists
+    if (fill_overrides.has(element_id)) {
+        Color color = fill_overrides[element_id];
+        LunaSVGIntegration::apply_fill_color(element, color);
+    }
+    
+    // Apply stroke override if exists  
+    if (stroke_overrides.has(element_id)) {
+        Color color = stroke_overrides[element_id];
+        LunaSVGIntegration::apply_stroke_color(element, color);
+    }
 }
 
 // LOD (Level of Detail) System Implementation
