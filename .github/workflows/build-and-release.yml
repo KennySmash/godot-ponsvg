@@ -1,0 +1,323 @@
+name: Build and Release PonSVG GDExtension
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, dev ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: false
+        default: 'v0.0.0-dev'
+      create_release:
+        description: 'Create GitHub release'
+        type: boolean
+        default: false
+
+env:
+  GODOT_CPP_VERSION: "4.3"
+
+jobs:
+  build:
+    name: Build on ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            runner: windows-latest
+            arch: x86_64
+            extension: dll
+            cmake_preset: windows-x64
+          - platform: linux
+            runner: ubuntu-latest
+            arch: x86_64
+            extension: so
+            cmake_preset: linux-x64
+          - platform: macos
+            runner: macos-latest
+            arch: universal
+            extension: dylib
+            cmake_preset: macos-universal
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install cmake ninja
+
+    - name: Setup MSVC (Windows)
+      if: matrix.platform == 'windows'
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+
+    - name: Install dependencies (Linux)
+      if: matrix.platform == 'linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake ninja-build
+
+    - name: Install dependencies (macOS)
+      if: matrix.platform == 'macos'
+      run: |
+        brew install cmake ninja
+
+    - name: Cache godot-cpp
+      uses: actions/cache@v3
+      with:
+        path: godot-cpp/bin
+        key: godot-cpp-${{ matrix.platform }}-${{ env.GODOT_CPP_VERSION }}-${{ hashFiles('godot-cpp/**') }}
+        restore-keys: |
+          godot-cpp-${{ matrix.platform }}-${{ env.GODOT_CPP_VERSION }}-
+
+    - name: Build GDExtension
+      run: python build_gdextension.py --platform ${{ matrix.platform }} --arch ${{ matrix.arch }} --config release
+
+    - name: Verify build artifacts
+      shell: bash
+      run: |
+        echo "=== Build Output Directory ==="
+        ls -la build/
+        echo "=== Extension Files ==="
+        find build/ -name "*.dll" -o -name "*.so" -o -name "*.dylib" | head -10
+        echo "=== GDExtension File ==="
+        if [ -f "ponsvg.gdextension" ]; then
+          cat ponsvg.gdextension
+        fi
+
+    - name: Create package structure
+      shell: bash
+      run: |
+        # Create addon directory structure
+        mkdir -p package/addons/ponsvg/bin
+        
+        # Copy GDExtension file
+        cp ponsvg.gdextension package/addons/ponsvg/
+        
+        # Copy platform-specific binaries
+        find build/ -name "*.dll" -o -name "*.so" -o -name "*.dylib" | while read file; do
+          cp "$file" package/addons/ponsvg/bin/
+        done
+        
+        # Copy documentation and license
+        cp README.md package/addons/ponsvg/
+        cp LICENSE* package/addons/ponsvg/ 2>/dev/null || true
+        
+        # Create plugin.cfg
+        cat > package/addons/ponsvg/plugin.cfg << EOF
+        [plugin]
+        
+        name="PonSVG"
+        description="Advanced SVG rendering and manipulation for Godot"
+        author="KennySmash"
+        version="${{ github.event.inputs.version || github.ref_name }}"
+        script=""
+        EOF
+        
+        # Create installation guide
+        cat > package/addons/ponsvg/INSTALL.md << EOF
+        # PonSVG Installation
+        
+        ## Automatic Installation (Recommended)
+        1. Extract this archive to your project's root directory
+        2. Enable the plugin in Project Settings > Plugins
+        
+        ## Manual Installation
+        1. Copy the \`addons/ponsvg\` folder to your project's \`addons/\` directory
+        2. Enable "PonSVG" in Project Settings > Plugins
+        
+        ## Usage
+        See README.md for complete API documentation and examples.
+        
+        Built for Godot ${{ env.GODOT_CPP_VERSION }} on ${{ matrix.platform }}
+        EOF
+
+    - name: Create platform-specific archive
+      shell: bash
+      run: |
+        cd package
+        if [ "${{ matrix.platform }}" == "windows" ]; then
+          7z a -tzip "../ponsvg-${{ matrix.platform }}-${{ matrix.arch }}.zip" addons/
+        else
+          tar -czf "../ponsvg-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz" addons/
+        fi
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ponsvg-${{ matrix.platform }}-${{ matrix.arch }}
+        path: |
+          ponsvg-${{ matrix.platform }}-${{ matrix.arch }}.*
+          package/
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install test dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-xdist
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts/
+
+    - name: Run module structure tests
+      run: |
+        python tests/build_test.py
+
+    - name: Run integration tests
+      run: |
+        cd tests
+        python test_runner.py --platform linux --validate-only
+
+  create-universal-package:
+    name: Create Universal Package
+    runs-on: ubuntu-latest
+    needs: [build, test]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') || github.event.inputs.create_release == 'true'
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts/
+
+    - name: Create universal package
+      run: |
+        mkdir -p universal/addons/ponsvg/bin
+        
+        # Copy GDExtension file from any platform (they're identical)
+        find artifacts/ -name "ponsvg.gdextension" | head -1 | xargs cp -t universal/addons/ponsvg/
+        
+        # Copy all platform binaries
+        find artifacts/ -name "*.dll" -o -name "*.so" -o -name "*.dylib" | while read file; do
+          cp "$file" universal/addons/ponsvg/bin/
+        done
+        
+        # Copy documentation
+        cp README.md universal/addons/ponsvg/
+        cp LICENSE* universal/addons/ponsvg/ 2>/dev/null || true
+        
+        # Create universal plugin.cfg
+        cat > universal/addons/ponsvg/plugin.cfg << EOF
+        [plugin]
+        
+        name="PonSVG"
+        description="Advanced SVG rendering and manipulation for Godot"
+        author="KennySmash"
+        version="${{ github.ref_name }}"
+        script=""
+        EOF
+        
+        # Create universal installation guide
+        cat > universal/addons/ponsvg/INSTALL.md << EOF
+        # PonSVG Installation - Universal Package
+        
+        This package contains binaries for Windows, Linux, and macOS.
+        
+        ## Installation
+        1. Extract this archive to your project's root directory
+        2. Enable the plugin in Project Settings > Plugins
+        
+        ## Compatibility
+        - Windows x86_64
+        - Linux x86_64
+        - macOS Universal (Intel + Apple Silicon)
+        - Godot ${{ env.GODOT_CPP_VERSION }}+
+        
+        ## Usage
+        See README.md for complete API documentation and examples.
+        EOF
+
+    - name: Generate changelog
+      run: |
+        if [ "${{ github.event_name }}" == "push" ]; then
+          # For tag pushes, generate changelog from git history
+          if git describe --tags --abbrev=0 HEAD~1 2>/dev/null; then
+            PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1)
+            echo "## Changes since $PREV_TAG" > CHANGELOG.md
+            git log $PREV_TAG..HEAD --pretty=format:"- %s" >> CHANGELOG.md
+          else
+            echo "## Initial Release" > CHANGELOG.md
+            echo "- Complete PonSVG GDExtension implementation" >> CHANGELOG.md
+            echo "- Advanced SVG rendering with LunaSVG integration" >> CHANGELOG.md
+            echo "- Style override system for runtime customization" >> CHANGELOG.md
+            echo "- Intelligent caching and LOD system" >> CHANGELOG.md
+            echo "- Cross-platform support (Windows, Linux, macOS)" >> CHANGELOG.md
+          fi
+        else
+          echo "## Development Build" > CHANGELOG.md
+          echo "Built from ${{ github.ref_name }} branch" >> CHANGELOG.md
+        fi
+
+    - name: Create universal archive
+      run: |
+        cd universal
+        tar -czf "../ponsvg-universal-${{ github.ref_name }}.tar.gz" addons/
+
+    - name: Upload universal package
+      uses: actions/upload-artifact@v3
+      with:
+        name: ponsvg-universal
+        path: |
+          ponsvg-universal-*.tar.gz
+          CHANGELOG.md
+
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: create-universal-package
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') || github.event.inputs.create_release == 'true'
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts/
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.event.inputs.version || github.ref_name }}
+        name: PonSVG ${{ github.event.inputs.version || github.ref_name }}
+        body_path: artifacts/ponsvg-universal/CHANGELOG.md
+        draft: false
+        prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+        files: |
+          artifacts/ponsvg-windows-x86_64/ponsvg-windows-x86_64.zip
+          artifacts/ponsvg-linux-x86_64/ponsvg-linux-x86_64.tar.gz
+          artifacts/ponsvg-macos-universal/ponsvg-macos-universal.tar.gz
+          artifacts/ponsvg-universal/ponsvg-universal-*.tar.gz
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

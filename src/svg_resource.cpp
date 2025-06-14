@@ -36,6 +36,13 @@ void PonSVGResource::_bind_methods() {
     ClassDB::bind_method(D_METHOD("override_stroke", "element_id", "color"), &PonSVGResource::override_stroke);
     ClassDB::bind_method(D_METHOD("override_shader", "element_id", "shader"), &PonSVGResource::override_shader);
     
+    // Class-based overrides
+    ClassDB::bind_method(D_METHOD("override_fill_by_class", "class_name", "color"), &PonSVGResource::override_fill_by_class);
+    ClassDB::bind_method(D_METHOD("override_stroke_by_class", "class_name", "color"), &PonSVGResource::override_stroke_by_class);
+    
+    // CSS property overrides
+    ClassDB::bind_method(D_METHOD("override_css_property", "element_id", "property", "value"), &PonSVGResource::override_css_property);
+    
     ClassDB::bind_method(D_METHOD("clear_fill_override", "element_id"), &PonSVGResource::clear_fill_override);
     ClassDB::bind_method(D_METHOD("clear_stroke_override", "element_id"), &PonSVGResource::clear_stroke_override);
     ClassDB::bind_method(D_METHOD("clear_shader_override", "element_id"), &PonSVGResource::clear_shader_override);
@@ -226,6 +233,36 @@ void PonSVGResource::clear_all_overrides() {
     fill_overrides.clear();
     stroke_overrides.clear();
     shader_overrides.clear();
+    css_overrides.clear();
+    needs_cache_clear = true;
+    emit_changed();
+}
+
+// Class-based override implementations
+void PonSVGResource::override_fill_by_class(const String &p_class_name, const Color &p_color) {
+    String class_key = "." + p_class_name;
+    fill_overrides[class_key] = p_color;
+    needs_cache_clear = true;
+    emit_changed();
+}
+
+void PonSVGResource::override_stroke_by_class(const String &p_class_name, const Color &p_color) {
+    String class_key = "." + p_class_name;
+    stroke_overrides[class_key] = p_color;
+    needs_cache_clear = true;
+    emit_changed();
+}
+
+void PonSVGResource::override_css_property(const String &p_element_id, const String &p_property, const String &p_value) {
+    // Store CSS properties in a separate dictionary for more flexible styling
+    String css_key = p_element_id + String("::") + p_property;
+    if (!css_overrides.has(p_element_id)) {
+        css_overrides[p_element_id] = Dictionary();
+    }
+    Dictionary element_css = css_overrides[p_element_id];
+    element_css[p_property] = p_value;
+    css_overrides[p_element_id] = element_css;
+    
     needs_cache_clear = true;
     emit_changed();
 }
@@ -236,13 +273,12 @@ void PonSVGResource::_clear_cache() const {
 }
 
 String PonSVGResource::_generate_cache_key(const String &p_content_id, const Vector2i &p_size) const {
-    String key = p_content_id + "_" + String::num_int64(p_size.x) + "x" + String::num_int64(p_size.y);
-    
-    // Include override hashes in cache key
-    if (fill_overrides.size() > 0 || stroke_overrides.size() > 0 || shader_overrides.size() > 0) {
-        key += "_overrides_" + String::num_int64(fill_overrides.hash()) + 
-               "_" + String::num_int64(stroke_overrides.hash()) +
-               "_" + String::num_int64(shader_overrides.hash());
+    String key = p_content_id + String("_") + String::num_int64(p_size.x) + String("x") + String::num_int64(p_size.y);
+      // Include override hashes in cache key
+    if (fill_overrides.size() > 0 || stroke_overrides.size() > 0 || shader_overrides.size() > 0 || css_overrides.size() > 0) {        key += String("_overrides_") + String::num_int64(fill_overrides.hash()) + 
+               String("_") + String::num_int64(stroke_overrides.hash()) +
+               String("_") + String::num_int64(shader_overrides.hash()) +
+               String("_") + String::num_int64(css_overrides.hash());
     }
     
     return key;
@@ -256,11 +292,14 @@ Ref<Image> PonSVGResource::_get_cached_image(const String &p_cache_key, const Ve
     if (needs_cache_clear) {
         _clear_cache();
     }
-    
-    if (cache_entries.has(p_cache_key)) {
-        PonSVGCacheEntry entry = cache_entries[p_cache_key];
-        if (!entry.is_dirty && entry.size == p_size && entry.image.is_valid()) {
-            return entry.image;
+      if (cache_entries.has(p_cache_key)) {
+        Dictionary entry = cache_entries[p_cache_key];
+        bool is_dirty = entry.get("is_dirty", true);
+        Vector2i size = entry.get("size", Vector2i());
+        Ref<Image> image = entry.get("image", Ref<Image>());
+        
+        if (!is_dirty && size == p_size && image.is_valid()) {
+            return image;
         }
     }
     
@@ -271,13 +310,12 @@ void PonSVGResource::_store_cached_image(const String &p_cache_key, const Vector
     if (!cache_enabled) {
         return;
     }
-    
-    PonSVGCacheEntry entry;
-    entry.image = p_image;
-    entry.size = p_size;
-    entry.cache_key = p_cache_key;
-    entry.timestamp = OS::get_singleton()->get_ticks_msec();
-    entry.is_dirty = false;
+      Dictionary entry;
+    entry["image"] = p_image;
+    entry["size"] = p_size;
+    entry["cache_key"] = p_cache_key;
+    entry["timestamp"] = Time::get_singleton()->get_ticks_msec();
+    entry["is_dirty"] = false;
     
     cache_entries[p_cache_key] = entry;
 }
@@ -453,6 +491,71 @@ void PonSVGResource::_apply_overrides_to_element(lunasvg::Element& element, cons
     if (stroke_overrides.has(element_id)) {
         Color color = stroke_overrides[element_id];
         LunaSVGIntegration::apply_stroke_color(element, color);
+    }
+      // Apply CSS property overrides if they exist
+    if (css_overrides.has(element_id)) {
+        Dictionary element_css = css_overrides[element_id];
+        Array css_keys = element_css.keys();
+        for (int i = 0; i < css_keys.size(); i++) {
+            String property = css_keys[i];
+            String value = element_css[property];
+            LunaSVGIntegration::apply_css_style(element, property, value);
+        }
+    }
+    
+    // Apply shader override if exists
+    if (shader_overrides.has(element_id)) {
+        // Shader overrides are handled at the texture level, not at the SVG level
+        // This is noted for the calling code to handle appropriately
+        print_line("Shader override detected for element: " + element_id + " (handled at texture level)");
+    }
+    
+    // Apply overrides to child elements recursively (for comprehensive styling)
+    _apply_overrides_to_children(element, element_id);
+}
+
+void PonSVGResource::_apply_overrides_to_children(lunasvg::Element& parent_element, const String& base_id) const {
+    if (parent_element.isNull()) {
+        return;
+    }
+      // Get all child elements and apply matching overrides
+    auto children = parent_element.children();
+    for (const auto& child : children) {
+        if (child.isNull() || !child.isElement()) continue;
+        
+        // Convert Node to Element
+        lunasvg::Element child_element = child.toElement();
+        if (child_element.isNull()) continue;
+        
+        // Check if child has an ID that matches our overrides
+        String child_id = LunaSVGIntegration::get_element_attribute(child_element, "id");
+        if (!child_id.is_empty()) {
+            // Apply overrides for this specific child ID
+            if (fill_overrides.has(child_id)) {
+                Color color = fill_overrides[child_id];
+                LunaSVGIntegration::apply_fill_color(child_element, color);
+            }
+            if (stroke_overrides.has(child_id)) {
+                Color color = stroke_overrides[child_id];
+                LunaSVGIntegration::apply_stroke_color(child_element, color);
+            }        }
+        
+        // Also check for class-based or tag-based overrides
+        String child_class = LunaSVGIntegration::get_element_attribute(child_element, "class");
+        if (!child_class.is_empty()) {
+            String class_override_key = "." + child_class;
+            if (fill_overrides.has(class_override_key)) {
+                Color color = fill_overrides[class_override_key];
+                LunaSVGIntegration::apply_fill_color(child_element, color);
+            }
+            if (stroke_overrides.has(class_override_key)) {
+                Color color = stroke_overrides[class_override_key];
+                LunaSVGIntegration::apply_stroke_color(child_element, color);
+            }
+        }
+        
+        // Recursively apply to grandchildren
+        _apply_overrides_to_children(child_element, base_id);
     }
 }
 

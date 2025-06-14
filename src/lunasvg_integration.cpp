@@ -177,6 +177,56 @@ void LunaSVGIntegration::apply_style_overrides(lunasvg::Element element, const D
     }
 }
 
+void LunaSVGIntegration::apply_css_style(lunasvg::Element& element, const String& css_property, const String& css_value) {
+    if (element.isNull()) {
+        return;
+    }
+    
+    // Apply CSS-style properties directly
+    set_element_attribute(element, css_property, css_value);
+}
+
+void LunaSVGIntegration::apply_multiple_overrides(lunasvg::Element& element, const Dictionary& fill_overrides, const Dictionary& stroke_overrides) {
+    if (element.isNull()) {
+        return;
+    }
+    
+    String element_id = get_element_attribute(element, "id");
+    String element_class = get_element_attribute(element, "class");
+    
+    // Apply ID-based fill override
+    if (!element_id.is_empty() && fill_overrides.has(element_id)) {
+        Color color = fill_overrides[element_id];
+        apply_fill_color(element, color);
+    }
+    
+    // Apply class-based fill override  
+    if (!element_class.is_empty()) {
+        String class_key = "." + element_class;
+        if (fill_overrides.has(class_key)) {
+            Color color = fill_overrides[class_key];
+            apply_fill_color(element, color);
+        }
+    }
+    
+    // Apply ID-based stroke override
+    if (!element_id.is_empty() && stroke_overrides.has(element_id)) {
+        Color color = stroke_overrides[element_id];
+        apply_stroke_color(element, color);
+    }
+    
+    // Apply class-based stroke override
+    if (!element_class.is_empty()) {
+        String class_key = "." + element_class;
+        if (stroke_overrides.has(class_key)) {
+            Color color = stroke_overrides[class_key];
+            apply_stroke_color(element, color);
+        }
+    }
+}
+
+// Enhanced style overrides function with more flexibility
+
 lunasvg::Bitmap LunaSVGIntegration::to_lunasvg_bitmap(const lunasvg::Bitmap& bitmap) {
     // Direct return since it's the same type
     return bitmap;

@@ -1,5 +1,5 @@
 #include "svg_texture.h"
-#include "servers/rendering_server.h"
+#include <godot_cpp/classes/rendering_server.hpp>
 
 PonSVGTexture::PonSVGTexture() {
     render_size = Vector2i(256, 256);
@@ -13,9 +13,8 @@ PonSVGTexture::~PonSVGTexture() {
     }
 }
 
-void PonSVGTexture::_bind_methods() {
-    ClassDB::bind_method(D_METHOD("set_svg_resource", "resource"), &PonSVGTexture::set_svg_resource);
-    ClassDB::bind_method(D_METHOD("get_svg_resource"), &PonSVGTexture::get_svg_resource);
+void PonSVGTexture::_bind_methods() {    ClassDB::bind_method(D_METHOD("set_ponsvg_resource", "resource"), &PonSVGTexture::set_ponsvg_resource);
+    ClassDB::bind_method(D_METHOD("get_ponsvg_resource"), &PonSVGTexture::get_ponsvg_resource);
     
     ClassDB::bind_method(D_METHOD("set_render_size", "size"), &PonSVGTexture::set_render_size);
     ClassDB::bind_method(D_METHOD("get_render_size"), &PonSVGTexture::get_render_size);
@@ -34,32 +33,22 @@ void PonSVGTexture::_update_image() {
     cached_image = svg_resource->rasterize_full(render_size);
     
     if (cached_image.is_valid()) {
-        RenderingServer::get_singleton()->texture_2d_update(texture_rid, cached_image);
+        RenderingServer::get_singleton()->texture_2d_update(texture_rid, cached_image, 0);
     }
     
     needs_update = false;
 }
 
-int PonSVGTexture::get_width() const {
+int32_t PonSVGTexture::_get_width() const {
     return render_size.x;
 }
 
-int PonSVGTexture::get_height() const {
+int32_t PonSVGTexture::_get_height() const {
     return render_size.y;
 }
 
-RID PonSVGTexture::get_rid() const {
-    const_cast<PonSVGTexture*>(this)->_update_image();
-    return texture_rid;
-}
-
-bool PonSVGTexture::has_alpha() const {
+bool PonSVGTexture::_has_alpha() const {
     return true; // SVGs typically have alpha
-}
-
-Ref<Image> PonSVGTexture::get_image() const {
-    const_cast<PonSVGTexture*>(this)->_update_image();
-    return cached_image;
 }
 
 void PonSVGTexture::set_ponsvg_resource(const Ref<PonSVGResource> &p_resource) {

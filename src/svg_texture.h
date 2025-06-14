@@ -22,14 +22,10 @@ protected:
 
 public:
     PonSVGTexture();
-    ~PonSVGTexture();
-
-    // Texture2D interface
-    virtual int get_width() const override;
-    virtual int get_height() const override;
-    virtual RID get_rid() const override;
-    virtual bool has_alpha() const override;
-    virtual Ref<Image> get_image() const override;    // PonSVG-specific methods
+    ~PonSVGTexture();    // Texture2D interface
+    virtual int32_t _get_width() const override;
+    virtual int32_t _get_height() const override;
+    virtual bool _has_alpha() const override;// PonSVG-specific methods
     void set_ponsvg_resource(const Ref<PonSVGResource> &p_resource);
     Ref<PonSVGResource> get_ponsvg_resource() const;
     

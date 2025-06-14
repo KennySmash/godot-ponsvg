@@ -1,5 +1,5 @@
 #include "svg_sprite.h"
-#include "servers/rendering_server.h"
+#include <godot_cpp/classes/rendering_server.hpp>
 
 PonSVGSprite2D::PonSVGSprite2D() {
     draw_size = Vector2(64, 64);
@@ -68,7 +68,7 @@ void PonSVGSprite2D::_update_texture() {
     }
     
     if (cached_image.is_valid()) {
-        RenderingServer::get_singleton()->texture_2d_update(texture_rid, cached_image);
+        RenderingServer::get_singleton()->texture_2d_update(texture_rid, cached_image, 0);
     }
     
     needs_update = false;
@@ -91,14 +91,13 @@ void PonSVGSprite2D::_draw_sprite() {
     }
     
     Rect2 src_rect = Rect2(Vector2(), draw_size);
-    Rect2 dst_rect = Rect2(pos, draw_size);
-      if (material_override.is_valid()) {
-        // Use custom material if available
-        RenderingServer::get_singleton()->canvas_item_add_texture_rect_region(get_canvas_item(), dst_rect, texture_rid, src_rect, modulate_color, false, material_override->get_rid());
-    } else {
-        // Standard texture draw
-        RenderingServer::get_singleton()->canvas_item_add_texture_rect_region(get_canvas_item(), dst_rect, texture_rid, src_rect, modulate_color);
+    Rect2 dst_rect = Rect2(pos, draw_size);      if (material_override.is_valid()) {
+        // Set material on canvas item
+        RenderingServer::get_singleton()->canvas_item_set_material(get_canvas_item(), material_override->get_rid());
     }
+    
+    // Draw texture
+    RenderingServer::get_singleton()->canvas_item_add_texture_rect_region(get_canvas_item(), dst_rect, texture_rid, src_rect, modulate_color, false, true);
 }
 
 void PonSVGSprite2D::set_ponsvg_resource(const Ref<PonSVGResource> &p_resource) {

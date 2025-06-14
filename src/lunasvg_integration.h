@@ -39,6 +39,8 @@ public:
     static void apply_fill_color(lunasvg::Element& element, const Color& color);
     static void apply_stroke_color(lunasvg::Element& element, const Color& color);
     static void apply_style_overrides(lunasvg::Element element, const Dictionary& style_overrides);
+    static void apply_css_style(lunasvg::Element& element, const String& css_property, const String& css_value);
+    static void apply_multiple_overrides(lunasvg::Element& element, const Dictionary& fill_overrides, const Dictionary& stroke_overrides);
     
     // Conversion utilities
     static lunasvg::Bitmap to_lunasvg_bitmap(const lunasvg::Bitmap& bitmap);

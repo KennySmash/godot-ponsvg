@@ -40,6 +40,7 @@ private:
     Dictionary fill_overrides;
     Dictionary stroke_overrides;
     Dictionary shader_overrides;
+    Dictionary css_overrides;  // For generic CSS property overrides
     
     // Performance optimization - caching system
     mutable Dictionary cache_entries; // String -> PonSVGCacheEntry
@@ -55,6 +56,7 @@ private:
     void _extract_symbols();
     void _apply_stored_overrides();
     void _apply_overrides_to_element(lunasvg::Element& element, const String& element_id) const;
+    void _apply_overrides_to_children(lunasvg::Element& parent_element, const String& base_id) const;
     void _clear_cache() const;
     String _generate_cache_key(const String &p_content_id, const Vector2i &p_size) const;
     Ref<Image> _get_cached_image(const String &p_cache_key, const Vector2i &p_size) const;
@@ -80,6 +82,13 @@ public:
     void override_fill(const String &p_element_id, const Color &p_color);
     void override_stroke(const String &p_element_id, const Color &p_color);
     void override_shader(const String &p_element_id, Ref<Shader> p_shader);
+    
+    // Class-based overrides (for styling multiple elements)
+    void override_fill_by_class(const String &p_class_name, const Color &p_color);
+    void override_stroke_by_class(const String &p_class_name, const Color &p_color);
+    
+    // CSS-style overrides
+    void override_css_property(const String &p_element_id, const String &p_property, const String &p_value);
     
     void clear_fill_override(const String &p_element_id);
     void clear_stroke_override(const String &p_element_id);
