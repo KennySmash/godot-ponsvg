@@ -3,6 +3,10 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/time.hpp>
+#include <godot_cpp/classes/sub_viewport.hpp>
+#include <godot_cpp/classes/texture_rect.hpp>
+#include <godot_cpp/classes/image_texture.hpp>
+#include <godot_cpp/classes/viewport_texture.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include "lunasvg.h"
@@ -426,8 +430,7 @@ Ref<Image> PonSVGResource::rasterize_element_with_shader(const String &p_element
         ERR_PRINT("Could not find element with ID: " + p_element_id);
         return Ref<Image>();
     }
-    
-    // Apply style overrides before rasterization
+      // Apply style overrides before rasterization
     _apply_overrides_to_element(element, p_element_id);
     
     // First, render the element normally
@@ -436,10 +439,17 @@ Ref<Image> PonSVGResource::rasterize_element_with_shader(const String &p_element
         return Ref<Image>();
     }
     
-    // TODO: Apply shader processing here
-    // This would require integration with Godot's rendering system
-    // For now, return the base image with a note that shader processing is not yet implemented
-    print_line("Shader override requested but not yet fully implemented. Returning base image.");
+    // Apply shader processing if valid
+    if (p_shader.is_valid() && _validate_shader(p_shader)) {
+        Ref<Image> processed_image = _apply_shader_to_image(base_image, p_shader, p_size);
+        if (processed_image.is_valid()) {
+            return processed_image;
+        } else {
+            print_line("Warning: Shader processing failed, returning base image.");
+        }
+    } else {
+        print_line("Warning: Invalid shader provided, returning base image.");
+    }
     
     return base_image;
 }
@@ -621,4 +631,75 @@ Vector2i PonSVGResource::calculate_lod_size(const Vector2i &p_requested_size) co
     lod_size.y = CLAMP(lod_size.y, min_size.y, max_size.y);
     
     return lod_size;
+}
+
+// Shader processing implementation
+Ref<Image> PonSVGResource::_apply_shader_to_image(const Ref<Image> &p_base_image, Ref<Shader> p_shader, const Vector2i &p_size) const {
+    if (p_base_image.is_null() || p_shader.is_null()) {
+        return Ref<Image>();
+    }
+    
+    // Create temporary SubViewport for shader processing
+    SubViewport *viewport = memnew(SubViewport);
+    viewport->set_size(p_size);
+    viewport->set_render_target_update_mode(SubViewport::UPDATE_ONCE);
+    
+    // Create TextureRect to hold the base image
+    TextureRect *texture_rect = memnew(TextureRect);
+    texture_rect->set_size(Vector2(p_size.x, p_size.y));
+    texture_rect->set_stretch_mode(TextureRect::STRETCH_KEEP_ASPECT_COVERED);
+    
+    // Create ImageTexture from base image
+    Ref<ImageTexture> image_texture;
+    image_texture.instantiate();
+    image_texture->set_image(p_base_image);
+    texture_rect->set_texture(image_texture);
+    
+    // Create and apply shader material
+    Ref<ShaderMaterial> shader_material;
+    shader_material.instantiate();
+    shader_material->set_shader(p_shader);
+    texture_rect->set_material(shader_material);
+    
+    // Add to viewport and process
+    viewport->add_child(texture_rect);
+    
+    // Force render update
+    viewport->set_render_target_update_mode(SubViewport::UPDATE_ONCE);
+    
+    // Get the processed texture
+    Ref<ViewportTexture> viewport_texture = viewport->get_texture();
+    if (viewport_texture.is_null()) {
+        // Cleanup and return null
+        viewport->queue_free();
+        return Ref<Image>();
+    }
+    
+    // Extract image from viewport texture
+    Ref<Image> processed_image = viewport_texture->get_image();
+    
+    // Cleanup temporary resources
+    viewport->queue_free();
+    
+    return processed_image;
+}
+
+bool PonSVGResource::_validate_shader(Ref<Shader> p_shader) const {
+    if (p_shader.is_null()) {
+        return false;
+    }
+    
+    // Check if shader has valid code
+    String shader_code = p_shader->get_code();
+    if (shader_code.is_empty()) {
+        return false;
+    }
+    
+    // Basic validation - check for fragment shader
+    if (!shader_code.contains("shader_type canvas_item")) {
+        print_line("Warning: Shader must be of type 'canvas_item' for SVG processing.");
+        return false;
+    }
+    
+    return true;
 }

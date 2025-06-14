@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4ecdc4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Test symbols for shader effects -->
+  <symbol id="icon-star" viewBox="0 0 100 100">
+    <path d="M50 10 L61 39 L90 39 L68 58 L79 87 L50 70 L21 87 L32 58 L10 39 L39 39 Z" 
+          fill="#ffdd59" stroke="#ff6b6b" stroke-width="3"/>
+  </symbol>
+  
+  <symbol id="icon-heart" viewBox="0 0 100 100">
+    <path d="M50 85 C20 65, 5 35, 25 15 C35 5, 50 10, 50 25 C50 10, 65 5, 75 15 C95 35, 80 65, 50 85 Z" 
+          fill="#ff6b6b" stroke="#fff" stroke-width="2"/>
+  </symbol>
+  
+  <symbol id="icon-shield" viewBox="0 0 100 100">
+    <path d="M50 5 L80 20 L80 50 C80 70, 65 85, 50 95 C35 85, 20 70, 20 50 L20 20 Z" 
+          fill="url(#grad1)" stroke="#333" stroke-width="2"/>
+  </symbol>
+  
+  <!-- Background for shader testing -->
+  <rect id="background" width="400" height="300" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
+  
+  <!-- Test elements for individual shader application -->
+  <use id="star1" href="#icon-star" x="50" y="50" width="80" height="80"/>
+  <use id="heart1" href="#icon-heart" x="180" y="50" width="80" height="80"/>
+  <use id="shield1" href="#icon-shield" x="310" y="50" width="80" height="80"/>
+  
+  <!-- Complex shapes for advanced shader testing -->
+  <circle id="circle1" cx="100" cy="200" r="40" fill="#4ecdc4" stroke="#45b7aa" stroke-width="3"/>
+  <rect id="rect1" x="180" y="160" width="80" height="80" rx="10" fill="#ffdd59" stroke="#f1c40f" stroke-width="3"/>
+  <polygon id="triangle1" points="350,160 310,240 390,240" fill="#ff6b6b" stroke="#e74c3c" stroke-width="3"/>
+</svg>

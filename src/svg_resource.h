@@ -5,6 +5,10 @@
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/classes/shader.hpp>
 #include <godot_cpp/classes/shader_material.hpp>
+#include <godot_cpp/classes/canvas_item_material.hpp>
+#include <godot_cpp/classes/sub_viewport.hpp>
+#include <godot_cpp/classes/texture_rect.hpp>
+#include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/variant/packed_string_array.hpp>
 #include <godot_cpp/variant/vector2i.hpp>
 #include <godot_cpp/variant/color.hpp>
@@ -51,8 +55,7 @@ private:
     // LOD system
     bool lod_enabled;
     float lod_bias;
-    
-    void _parse_svg();
+      void _parse_svg();
     void _extract_symbols();
     void _apply_stored_overrides();
     void _apply_overrides_to_element(lunasvg::Element& element, const String& element_id) const;
@@ -61,6 +64,10 @@ private:
     String _generate_cache_key(const String &p_content_id, const Vector2i &p_size) const;
     Ref<Image> _get_cached_image(const String &p_cache_key, const Vector2i &p_size) const;
     void _store_cached_image(const String &p_cache_key, const Vector2i &p_size, const Ref<Image> &p_image) const;
+    
+    // Shader processing helpers
+    Ref<Image> _apply_shader_to_image(const Ref<Image> &p_base_image, Ref<Shader> p_shader, const Vector2i &p_size) const;
+    bool _validate_shader(Ref<Shader> p_shader) const;
 
 protected:
     static void _bind_methods();
@@ -102,8 +109,7 @@ public:
     Dictionary get_stroke_overrides() const { return stroke_overrides; }
     Dictionary get_shader_overrides() const { return shader_overrides; }
     
-    // Document access for internal use
-    lunasvg::Document* get_document() const { return document.get(); }
+    // Document access for internal use    lunasvg::Document* get_document() const { return document.get(); }
     
     // Rasterization support
     Ref<Image> rasterize_full(const Vector2i &p_size) const;
