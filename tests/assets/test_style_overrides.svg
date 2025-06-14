@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+    <defs>
+        <symbol id="icon-star" viewBox="0 0 24 24">
+            <path id="star-path" class="star-fill" 
+                  d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" 
+                  fill="#FFD700" stroke="#FFA500" stroke-width="1"/>
+        </symbol>
+        
+        <symbol id="icon-heart" viewBox="0 0 24 24">
+            <path id="heart-path" class="heart-fill"
+                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                  fill="#FF6B6B" stroke="#FF4757" stroke-width="1"/>
+        </symbol>
+    </defs>
+    
+    <!-- Test elements with various selectors -->
+    <rect id="background" x="0" y="0" width="200" height="200" fill="#F0F0F0"/>
+    
+    <g id="star-group">
+        <use href="#icon-star" x="50" y="50" width="40" height="40"/>
+        <text id="star-label" class="label-text" x="70" y="110" text-anchor="middle" fill="#333">Star</text>
+    </g>
+    
+    <g id="heart-group">  
+        <use href="#icon-heart" x="110" y="50" width="40" height="40"/>
+        <text id="heart-label" class="label-text" x="130" y="110" text-anchor="middle" fill="#333">Heart</text>
+    </g>
+    
+    <circle id="test-circle" class="circle-element" cx="100" cy="150" r="20" fill="#4ECDC4" stroke="#26D0CE"/>
+</svg>
